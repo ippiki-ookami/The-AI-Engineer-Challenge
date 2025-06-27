@@ -824,6 +824,11 @@ body {
     overflow-y: auto;
 }
 
+#contentModalBody pre {
+    white-space: pre-wrap;       /* Respects whitespace but wraps lines */
+    overflow-wrap: break-word;   /* Breaks long words/strings */
+}
+
 #contentModal .modal-content {
     max-width: 50vw;
     width: 90%;
