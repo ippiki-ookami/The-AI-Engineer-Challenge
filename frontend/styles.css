@@ -836,7 +836,7 @@ body {
 
 .json-formatter .json-value {
     white-space: pre-wrap;
-    word-break: break-all;
+    overflow-wrap: break-word; /* Ensures whole words wrap instead of splitting them */
     padding-left: 1ch; /* Add a small space after the colon */
 }
 
