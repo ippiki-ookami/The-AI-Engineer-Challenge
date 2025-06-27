@@ -11,7 +11,7 @@ from typing import Optional, AsyncGenerator
 import json
 
 # Import the debug logger
-from .debug_logger import debug_logger
+from debug_logger import debug_logger
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
