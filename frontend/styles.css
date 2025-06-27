@@ -416,11 +416,6 @@ body {
     gap: var(--spacing-md);
 }
 
-.main-content.debug-open ~ .input-container .input-wrapper {
-    width: 65%;
-    max-width: 65vw;
-}
-
 .message-input-container {
     display: flex;
     align-items: flex-end;
