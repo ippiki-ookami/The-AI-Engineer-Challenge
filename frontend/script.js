@@ -28,7 +28,6 @@ class ChatInterface {
         // Settings modal
         this.settingsModal = document.getElementById('settingsModal');
         this.defaultModel = document.getElementById('defaultModel');
-        this.themeSelect = document.getElementById('themeSelect');
         this.developerMessageInput = document.getElementById('developerMessage');
         
         // Buttons
@@ -77,10 +76,6 @@ class ChatInterface {
             this.updateUI();
         });
         
-        this.themeSelect.addEventListener('change', (e) => {
-            this.setTheme(e.target.value);
-        });
-        
         this.developerMessageInput.addEventListener('input', (e) => {
             this.developerMessage = e.target.value;
             localStorage.setItem('developer_message', this.developerMessage);
@@ -99,20 +94,11 @@ class ChatInterface {
     loadSettings() {
         // Load saved settings
         const savedModel = localStorage.getItem('default_model') || 'gpt-4.1-mini';
-        const savedTheme = localStorage.getItem('theme') || 'dark';
         
         this.currentModel = savedModel;
         this.modelSelect.value = savedModel;
         this.defaultModel.value = savedModel;
-        this.themeSelect.value = savedTheme;
         this.developerMessageInput.value = this.developerMessage;
-        
-        this.setTheme(savedTheme);
-    }
-
-    setTheme(theme) {
-        localStorage.setItem('theme', theme);
-        document.body.className = theme === 'light' ? 'light-theme' : '';
     }
 
     updateUI() {
