@@ -255,7 +255,7 @@ class ChatInterface {
     }
 
     async streamChat(userMessage) {
-        const response = await fetch('/api/chat', {
+        const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
