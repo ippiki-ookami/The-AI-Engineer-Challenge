@@ -827,6 +827,8 @@ body {
 #contentModalBody pre {
     white-space: pre-wrap;       /* Respects whitespace but wraps lines */
     overflow-wrap: break-word;   /* Breaks long words/strings */
+    padding-left: 1.5em;         /* Indent all lines */
+    text-indent: -1.5em;         /* Un-indent the first line */
 }
 
 #contentModal .modal-content {
