@@ -283,7 +283,7 @@ body {
 }
 
 .user-message .message-content {
-    background: var(--gradient-primary);
+    background: linear-gradient(135deg, #00aaff 0%, #005577 100%);
     border-color: transparent;
     color: white;
 }
