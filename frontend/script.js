@@ -216,9 +216,8 @@ class ChatInterface {
         this.autoResizeTextarea();
         this.handleInputChange();
 
-        // Show loading state
+        // Show typing indicator
         this.isLoading = true;
-        this.showLoading(true);
         this.addTypingIndicator();
 
         try {
@@ -230,7 +229,7 @@ class ChatInterface {
             this.addErrorMessage(error.message);
         } finally {
             this.isLoading = false;
-            this.showLoading(false);
+            this.handleInputChange();
         }
     }
 
@@ -314,23 +313,19 @@ class ChatInterface {
     }
 
     addTypingIndicator() {
+        this.removeTypingIndicator();
         const typingDiv = document.createElement('div');
         typingDiv.className = 'message typing-message';
         typingDiv.id = 'typingIndicator';
-        
         typingDiv.innerHTML = `
-            <div class="message-content">
-                <div class="typing-indicator">
-                    <span>AI is typing</span>
-                    <div class="typing-dots">
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                        <div class="typing-dot"></div>
-                    </div>
+            <div class="typing-bubble">
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
                 </div>
             </div>
         `;
-        
         this.chatMessages.appendChild(typingDiv);
         this.scrollToBottom();
     }
@@ -367,11 +362,7 @@ class ChatInterface {
     }
 
     showLoading(show) {
-        if (show) {
-            this.loadingOverlay.classList.add('active');
-        } else {
-            this.loadingOverlay.classList.remove('active');
-        }
+        // No longer needed; do nothing
     }
 
     clearChat() {
