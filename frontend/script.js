@@ -39,6 +39,10 @@ class ChatInterface {
         this.closeSettingsBtn = document.getElementById('closeSettings');
         this.exportChatBtn = document.getElementById('exportChat');
         this.uploadFileBtn = document.getElementById('uploadFile');
+        this.debugBtn = document.getElementById('debugBtn');
+
+        // Main Content Area
+        this.mainContent = document.getElementById('mainContent');
     }
 
     bindEvents() {
@@ -69,6 +73,9 @@ class ChatInterface {
         this.settingsModal.addEventListener('click', (e) => {
             if (e.target === this.settingsModal) this.closeSettings();
         });
+        
+        // Debug Panel
+        this.debugBtn.addEventListener('click', () => this.toggleDebugPanel());
         
         // Settings form events
         this.defaultModel.addEventListener('change', (e) => {
@@ -445,6 +452,11 @@ class ChatInterface {
             console.error('API health check failed:', error);
             return false;
         }
+    }
+
+    toggleDebugPanel() {
+        this.mainContent.classList.toggle('debug-open');
+        this.debugBtn.classList.toggle('active');
     }
 }
 

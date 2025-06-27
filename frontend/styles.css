@@ -140,22 +140,34 @@ body {
     transition: var(--transition-fast);
 }
 
-.clear-btn:hover {
+.clear-btn:hover,
+#debugBtn:hover {
     background: var(--bg-elevated);
     border-color: var(--border-hover);
     color: var(--text-primary);
 }
 
+#debugBtn.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-hover);
+}
+
 /* Chat Container */
 .chat-container {
-    flex: 1;
+    flex-shrink: 0; /* Prevent shrinking by default */
     display: flex;
     flex-direction: column;
-    max-width: 960px;
+    width: 960px; /* smaller container */
+    max-width: 100%;
+    transition: width var(--transition-normal);
     margin: 0 auto;
-    width: 100%;
     padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg); /* Add top padding */
     overflow: hidden;
+}
+
+.main-content.debug-open .chat-container {
+    width: 65%; /* Shrink when debug panel is open */
 }
 
 .chat-messages {
@@ -193,7 +205,7 @@ body {
 .message {
     display: flex;
     flex-direction: column;
-    max-width: 80%;
+    max-width: 85%; /* Slightly wider for new layout */
     animation: messageSlideIn 0.3s ease-out;
 }
 
@@ -702,4 +714,54 @@ body {
         transform: scale(1);
         opacity: 1;
     }
+}
+
+/* Main Content Layout */
+.main-content {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: stretch;
+    gap: var(--spacing-lg);
+    width: 100%;
+    padding: var(--spacing-lg);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+}
+
+/* Debug Panel */
+.debug-panel {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #e2e8f0; /* Light gray background */
+    border-radius: var(--radius-xl);
+    border: 1px solid #cbd5e1;
+    transition: all var(--transition-normal);
+    color: #2d3748;
+}
+
+.main-content.debug-open .debug-panel {
+    width: 35%; /* Expand when open */
+    opacity: 1;
+    padding: var(--spacing-lg);
+}
+
+.debug-header {
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    font-weight: 600;
+}
+.debug-header i {
+    color: var(--primary-color);
+    margin-right: var(--spacing-sm);
+}
+.debug-content {
+    flex: 1;
+    overflow-y: auto;
+    font-size: 0.875rem;
+    line-height: 1.6;
 } 
