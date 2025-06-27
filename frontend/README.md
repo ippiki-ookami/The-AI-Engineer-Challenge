@@ -20,9 +20,11 @@ A sleek, futuristic chat interface designed for learning LLM techniques such as 
 1. **OpenAI API Key**: Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
 2. **Backend Server**: Make sure the FastAPI backend is running (see `/api/README.md`)
 
-### Running the Frontend
+### Running the Application
 
-1. **Start the Backend Server**:
+**Both servers need to be running simultaneously:**
+
+1. **Start the Backend API Server** (Terminal 1):
    ```bash
    cd api
    pip install -r requirements.txt
@@ -30,16 +32,15 @@ A sleek, futuristic chat interface designed for learning LLM techniques such as 
    ```
    The API will be available at `http://localhost:8000`
 
-2. **Open the Frontend**:
-   - Simply open `frontend/index.html` in your web browser
-   - Or serve it using a local server:
-     ```bash
-     cd frontend
-     python -m http.server 8080
-     ```
-     Then visit `http://localhost:8080`
+2. **Start the Frontend Server** (Terminal 2):
+   ```bash
+   cd frontend
+   python -m http.server 3000
+   ```
+   The frontend will be available at `http://localhost:3000`
 
 3. **Configure Your API Key**:
+   - Open your browser and go to `http://localhost:3000`
    - Enter your OpenAI API key in the input field
    - Click "Save" to store it securely in your browser
 
@@ -103,10 +104,17 @@ A sleek, futuristic chat interface designed for learning LLM techniques such as 
 ## Technical Details
 
 ### Architecture
-- **Frontend**: Vanilla JavaScript with modern CSS
-- **Backend**: FastAPI with OpenAI integration
+- **Frontend**: Vanilla JavaScript with modern CSS (Port 3000)
+- **Backend**: FastAPI with OpenAI integration (Port 8000)
 - **Communication**: RESTful API with streaming responses
 - **Storage**: Local browser storage for settings and API key
+
+### Server Configuration
+- **Frontend Server**: `http://localhost:3000` (serves static files)
+- **Backend API**: `http://localhost:8000` (handles API requests)
+- **API Endpoints**: 
+  - `GET /api/health` - Health check
+  - `POST /api/chat` - Chat completion with streaming
 
 ### Browser Compatibility
 - Modern browsers with ES6+ support
@@ -123,9 +131,9 @@ A sleek, futuristic chat interface designed for learning LLM techniques such as 
 ### Common Issues
 
 **"API server may not be running"**
-- Make sure the backend server is started
-- Check that it's running on `http://localhost:8000`
-- Verify the API health endpoint responds
+- Make sure the backend server is started on port 8000
+- Check that it's running with `python app.py` in the `/api` directory
+- Verify the API health endpoint responds at `http://localhost:8000/api/health`
 
 **"Invalid API key format"**
 - Ensure your API key starts with `sk-`
@@ -135,7 +143,12 @@ A sleek, futuristic chat interface designed for learning LLM techniques such as 
 **Messages not sending**
 - Verify your API key is saved
 - Check your internet connection
-- Ensure the backend server is running
+- Ensure both servers are running (frontend on 3000, backend on 8000)
+
+**404 errors on API calls**
+- Make sure the backend server is running on port 8000
+- Check that the frontend is configured to call `http://localhost:8000/api/*`
+- Verify CORS is enabled on the backend
 
 **Styling issues**
 - Clear browser cache
@@ -145,8 +158,8 @@ A sleek, futuristic chat interface designed for learning LLM techniques such as 
 ### Getting Help
 
 1. Check the browser console for error messages
-2. Verify the backend server is running and accessible
-3. Test with a simple message first
+2. Verify both servers are running and accessible
+3. Test the API directly: `curl http://localhost:8000/api/health`
 4. Try refreshing the page
 
 ## Development
@@ -164,6 +177,7 @@ frontend/
 - Modify `styles.css` for visual changes
 - Edit `script.js` for functionality changes
 - Update `index.html` for structural changes
+- Change `apiBaseUrl` in `script.js` if using different backend URL
 
 ### Adding Features
 - The modular JavaScript class structure makes it easy to extend

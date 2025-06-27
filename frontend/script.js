@@ -6,6 +6,7 @@ class ChatInterface {
         this.isLoading = false;
         this.currentModel = 'gpt-4.1-mini';
         this.developerMessage = localStorage.getItem('developer_message') || 'You are a helpful AI assistant for an LLM bootcamp. Help students learn about RAG, prompt engineering, and other LLM techniques. Be clear, educational, and provide practical examples.';
+        this.apiBaseUrl = 'http://localhost:8000'; // Backend API server URL
         
         this.initializeElements();
         this.bindEvents();
@@ -221,7 +222,7 @@ class ChatInterface {
     }
 
     async callAPI(userMessage) {
-        const response = await fetch('/api/chat', {
+        const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -434,7 +435,7 @@ class ChatInterface {
     // Utility method to check API health
     async checkAPIHealth() {
         try {
-            const response = await fetch('/api/health');
+            const response = await fetch(`${this.apiBaseUrl}/api/health`);
             return response.ok;
         } catch (error) {
             console.error('API health check failed:', error);
