@@ -12,96 +12,83 @@ This allows students and developers to:
 
 ## 2. Core Principles
 
--   **Ephemeral Log:** The debug log is **not** a continuous, session-long record. It should be cleared and repopulated for **each new LLM response**. It only ever shows the process for the *most recent* interaction.
--   **Sequential & Nested View:** The log should present a chronological sequence of events. If a function calls another function, the child function's logs should be visually nested within the parent to represent the call stack and process flow.
+-   **Ephemeral Log:** The debug log is **not** a continuous, session-long record. It is cleared and repopulated for **each new LLM response**. It only ever shows the process for the *most recent* interaction.
+-   **Sequential & Nested View:** The log presents a chronological sequence of events. If a function calls another function, the child function's logs are visually nested within the parent to represent the call stack and process flow. The `level` property in the log entry controls this indentation on the frontend.
 
-## 3. Implementation Guide
+## 3. Implementation Details
 
-To support the debug panel, the backend needs to generate a structured log of its execution. We will create a `DebugLogger` helper class/module to encapsulate this logic and keep `app.py` clean.
+### 3.1. Backend: Streaming with Server-Sent Events (SSE)
 
-### 3.1. Generating the Debug Log
+-   **`api/debug_logger.py`**: A singleton `DebugLogger` class handles the creation and formatting of log entries. It maintains the state of the log for a single request.
+-   **`api/app.py`**: The `/api/chat` endpoint now uses an `event_stream` to send data.
+-   **Structured Events**: Instead of a plain text stream, the API sends structured JSON objects formatted as Server-Sent Events (SSE). Each event has a `type` (`chat`, `debug`, or `error`) and a `data` payload. This allows the frontend to easily distinguish between different kinds of messages.
+    ```python
+    # Example of an SSE message
+    yield f"data: {json.dumps(event_data)}\n\n"
+    ```
 
-Each function in the backend that represents a significant step in the process should generate a log entry using the `DebugLogger`. The main chat function (`/api/chat`) will be responsible for aggregating these entries and returning them alongside the chat response.
+### 3.2. Frontend: Parsing and Rendering
 
-For a seamless experience, the API should stream both the main chat content and the debug log entries as they are generated. This can be achieved using Server-Sent Events (SSE) or by formatting the streaming response to include distinct data types (e.g., `{"type": "chat", "data": "..."}` and `{"type": "debug", "data": {...}}`).
+-   **`frontend/script.js`**:
+    -   The `streamChat` function handles the SSE stream. It reads the incoming chunks, splits them into individual events, and parses the JSON data.
+    -   Based on the `type`, it routes the data to the appropriate handler: updating the chat message, adding a log to the debug panel, or showing an error.
+    -   The `renderDebugLog` function dynamically creates or updates `divs` in the debug panel for each log entry, styling them based on their `status` and `level`.
+    -   The `showContentModal` function is responsible for rendering the content of "clickable" log entries. It includes logic to pretty-print JSON with hanging indents for readability.
+-   **`frontend/styles.css`**:
+    -   Contains rules for the debug panel layout, log entry styling (including status colors and indentation), and the content modal.
+    -   The hanging indent for JSON is achieved using flexbox on `.json-line` elements.
+    -   Word wrapping is handled with `overflow-wrap: break-word` to prevent splitting words.
 
-### 3.2. Data Structure for a Log Entry
+## 4. Troubleshooting Common Issues
 
-A list of JSON objects is the recommended format for the log. Each object represents one step and should have a consistent structure.
+This section documents solutions to issues encountered during the initial implementation.
 
-```json
-{
-  "id": 1,
-  "parent_id": null,
-  "level": 0,
-  "timestamp": "2023-10-27T10:00:01.123Z",
-  "title": "User sends message",
-  "status": "success",
-  "content": {
-    "type": "clickable",
-    "data": "Hello, how does RAG work?"
-  }
-}
-```
+### 4.1. Issue: Debug Panel is Blank / Not Updating
 
--   `id`: A unique identifier for the step.
--   `parent_id`: The `id` of the parent step. `null` for top-level steps. This allows the frontend to render the nested structure correctly.
--   `level`: The indentation level (can be derived from the `parent_id` hierarchy on the frontend).
--   `timestamp`: The time the event occurred, for debugging and performance analysis.
--   `title`: A human-readable description of the step (e.g., "Sending to OpenAI API," "Processing RAG results").
--   `status`: The outcome of the step (e.g., `success`, `pending`, `error`). This helps in color-coding the entries on the frontend.
--   `content`: An object containing the data associated with this step.
-    -   `type`: Determines how the frontend should render the data:
-        -   `'inline'`: For short strings, display directly in the debug log.
-        -   `'clickable'`: For large objects (JSON payloads, long text), render a button.
-    -   `data`: The actual content. For `'clickable'` types, this is the content that will be shown in the modal.
+This is the most common issue and usually points to a communication problem between the frontend and backend.
 
-### 3.3. Handling Large Content with Clickables
+-   **Cause 1: Backend Server Not Restarted**
+    -   **Symptom:** The app works initially, but fails after backend changes (e.g., adding a new endpoint).
+    -   **Solution:** The FastAPI backend server must be **restarted** after any code change to load the new logic. Stop the server (`Ctrl+C`) and run `python api/app.py` again.
 
-When a log entry's content `type` is `'clickable'`, the frontend should render a button (e.g., "View Content," "Show API Request").
+-   **Cause 2: Incorrect API URL in Frontend**
+    -   **Symptom:** The browser's network tab shows requests to the wrong port (e.g., `http://localhost:3000/api/chat` instead of `8000`).
+    -   **Solution:** Ensure the `apiBaseUrl` variable in `frontend/script.js` is set to the correct backend server address (`http://localhost:8000`). The `fetch` call in `streamChat` must use this variable.
 
-When this button is clicked, a **modal window** should appear in the center of the screen, displaying the full, un-truncated `data` payload. This modal should ideally include formatting for JSON to improve readability.
+-   **Cause 3: Frontend Rendering Bug**
+    -   **Symptom:** The network tab shows the debug data is being received, but nothing appears in the panel.
+    -   **Solution:** Check the `renderDebugLog` function in `frontend/script.js`. Ensure that new DOM elements are being created and appended correctly for each log entry. The logic should handle both creating new entries and updating existing ones (e.g., changing a status from `pending` to `success`).
 
-## 4. Example Scenarios
+### 4.2. Issue: Backend Fails to Start with an `ImportError`
 
-### 4.1. Basic Chat Flow
+-   **Symptom:** Running `python api/app.py` fails immediately with `ImportError: attempted relative import with no known parent package`.
+-   **Cause:** This happens when a script run directly uses a relative import (e.g., `from .debug_logger import ...`). Python doesn't recognize the directory as a package in this context.
+-   **Solution:** Change the relative import to a direct/absolute one. In `api/app.py`, change `from .debug_logger` to `from debug_logger`.
 
-A simple user message would generate a series of log entries like this:
+### 4.3. General Checklist
 
-1.  **User sends message**
-    -   *Content (clickable):* `{ "user_message": "Explain quantum computing." }`
-2.  **Preparing API Request**
-    -   *Content (clickable):* `{ "model": "gpt-4.1-mini", "messages": [...] }`
-3.  **Sending to OpenAI API**
-    -   *Status:* `pending`
-4.  **Received API Response**
-    -   *Status:* `success`
-    -   *Content (clickable):* `{ "id": "chatcmpl-...", "object": "chat.completion.chunk", ... }`
-5.  **Parsing Final Message**
-    -   *Content (inline):* `"Quantum computing is..."`
-6.  **Displaying to User**
-
-### 4.2. Future: RAG Flow (Example)
-
-A more complex RAG query could be visualized in the debug panel as follows:
-
-1.  **User sends message**
-    -   *Content (clickable):* `{ "user_message": "What did the paper say about attention mechanisms?" }`
-2.  **Starting RAG Process**
-    1.  **Embedding User Query**
-        -   *Content (inline):* `"Using model text-embedding-ada-002"`
-    2.  **Searching Vector Database**
-        -   *Status:* `pending`
-    3.  **Retrieved Sources**
-        -   *Status:* `success`
-        -   *Content (clickable):* `[ { "source": "doc1.pdf", "score": 0.92 }, { "source": "doc3.txt", "score": 0.88 } ]`
-    4.  **Selecting Top-K Sources**
-        -   *Content (inline):* `"Selected 2 sources."`
-3.  **Generating Prompt with Context**
-    -   *Content (clickable):* `{ "model": "gpt-4.1-mini", "messages": [ { "role": "system", "content": "Context: ... User query: ..." } ] }`
-4.  **Sending to OpenAI API**
-    -   ... (continues like the basic chat flow) ...
+1.  **Are both servers running?** You need one terminal for the backend (`python api/app.py`) and another for the frontend (`python -m http.server 3000` in the `frontend` directory).
+2.  **Check browser console:** Look for any JavaScript errors or failed network requests (404s, CORS errors).
+3.  **Verify ports:** Ensure the backend is on port 8000 and the frontend is on 3000 (or whichever ports you are using).
 
 ---
+This guide provides a solid foundation for implementing and extending the debug panel. By adhering to these principles, we can create a powerful and intuitive learning tool for all users.
 
-This guide provides a solid foundation for implementing and extending the debug panel. By adhering to these principles, we can create a powerful and intuitive learning tool for all users. 
+
+
+
+{
+  "model": "gpt-4.1-mini",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a helpful AI assistant for an LLM bootcamp. Help students learn about RAG, prompt engineering, and 
+                  other LLM techniques. Be clear, educational, and provide practical examples."
+    },
+    {
+      "role": "user",
+      "content": "test!"
+    }
+  ],
+  "stream": true
+}
