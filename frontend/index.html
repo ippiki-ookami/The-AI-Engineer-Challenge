@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Bootcamp Chat Interface</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-brain"></i>
+                    <span>LLM Bootcamp</span>
+                </div>
+                <div class="header-controls">
+                    <div class="model-selector">
+                        <select id="modelSelect">
+                            <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                            <option value="gpt-4o">GPT-4o</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        </select>
+                    </div>
+                    <button id="clearChat" class="clear-btn">
+                        <i class="fas fa-trash"></i>
+                        Clear
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Chat Area -->
+        <main class="chat-container">
+            <div class="chat-messages" id="chatMessages">
+                <!-- Welcome message -->
+                <div class="message system-message">
+                    <div class="message-content">
+                        <div class="message-header">
+                            <i class="fas fa-robot"></i>
+                            <span>AI Assistant</span>
+                        </div>
+                        <div class="message-text">
+                            Welcome to the LLM Bootcamp! I'm here to help you learn about RAG, prompt engineering, and other LLM techniques. 
+                            <br><br>
+                            <strong>Getting Started:</strong>
+                            <ul>
+                                <li>Enter your OpenAI API key below</li>
+                                <li>Choose your preferred model</li>
+                                <li>Start experimenting with different prompts!</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Key Input -->
+            <div class="api-key-section" id="apiKeySection">
+                <div class="api-key-input">
+                    <i class="fas fa-key"></i>
+                    <input type="password" id="apiKeyInput" placeholder="Enter your OpenAI API key">
+                    <button id="saveApiKey" class="save-key-btn">
+                        <i class="fas fa-save"></i>
+                        Save
+                    </button>
+                </div>
+                <div class="api-key-status" id="apiKeyStatus">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>API key required to start chatting</span>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-container">
+                <div class="input-wrapper">
+                    <div class="message-input-container">
+                        <textarea 
+                            id="messageInput" 
+                            placeholder="Type your message here... (Shift+Enter for new line, Enter to send)"
+                            rows="1"
+                        ></textarea>
+                        <button id="sendButton" class="send-btn" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="input-features">
+                        <button id="uploadFile" class="feature-btn" title="Upload file for RAG">
+                            <i class="fas fa-file-upload"></i>
+                        </button>
+                        <button id="exportChat" class="feature-btn" title="Export conversation">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button id="settings" class="feature-btn" title="Settings">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p>AI is thinking...</p>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal" id="settingsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Settings</h3>
+                    <button class="close-btn" id="closeSettings">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-group">
+                        <label>Default Model:</label>
+                        <select id="defaultModel">
+                            <option value="gpt-4.1-mini">GPT-4.1 Mini</option>
+                            <option value="gpt-4o">GPT-4o</option>
+                            <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Theme:</label>
+                        <select id="themeSelect">
+                            <option value="dark">Dark</option>
+                            <option value="light">Light</option>
+                        </select>
+                    </div>
+                    <div class="setting-group">
+                        <label>Developer Message (System Prompt):</label>
+                        <textarea id="developerMessage" rows="4" placeholder="Enter a system prompt to guide the AI's behavior..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
