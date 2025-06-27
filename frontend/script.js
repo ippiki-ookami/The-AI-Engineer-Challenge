@@ -357,10 +357,46 @@ class ChatInterface {
     showContentModal(log) {
         this.contentModalTitle.textContent = log.title;
         let content = log.content.data;
+        this.contentModalBody.innerHTML = ''; // Clear previous content
+
         if (typeof content === 'object') {
-            content = JSON.stringify(content, null, 2);
+            const jsonString = JSON.stringify(content, null, 2);
+            const container = document.createElement('div');
+            container.className = 'json-formatter';
+
+            const lines = jsonString.split('\n');
+            lines.forEach(line => {
+                const lineDiv = document.createElement('div');
+                lineDiv.className = 'json-line';
+                
+                const colonIndex = line.indexOf(':');
+                // Check if it's a key-value pair (and not a time string in a value)
+                if (colonIndex > -1 && line.substring(0, colonIndex).includes('"')) {
+                    const keyPart = line.substring(0, colonIndex + 1);
+                    const valuePart = line.substring(colonIndex + 1);
+
+                    const keySpan = document.createElement('span');
+                    keySpan.className = 'json-key';
+                    keySpan.textContent = keyPart;
+
+                    const valueSpan = document.createElement('span');
+                    valueSpan.className = 'json-value';
+                    valueSpan.textContent = valuePart;
+                    
+                    lineDiv.appendChild(keySpan);
+                    lineDiv.appendChild(valueSpan);
+                } else {
+                    lineDiv.textContent = line;
+                }
+                container.appendChild(lineDiv);
+            });
+            this.contentModalBody.appendChild(container);
+        } else {
+            const pre = document.createElement('pre');
+            pre.textContent = content;
+            this.contentModalBody.appendChild(pre);
         }
-        this.contentModalBody.innerHTML = `<pre><code>${content}</code></pre>`;
+        
         this.contentModal.classList.add('active');
     }
 

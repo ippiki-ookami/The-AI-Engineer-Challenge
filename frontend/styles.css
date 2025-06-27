@@ -816,19 +816,28 @@ body {
 }
 
 #contentModalBody {
-    white-space: pre-wrap;
     background: var(--bg-primary);
     padding: var(--spacing-lg);
     border-radius: var(--radius-md);
     max-height: 70vh;
     overflow-y: auto;
+    font-family: monospace;
 }
 
 #contentModalBody pre {
-    white-space: pre-wrap;       /* Respects whitespace but wraps lines */
-    overflow-wrap: break-word;   /* Breaks long words/strings */
-    padding-left: 1.5em;         /* Indent all lines */
-    text-indent: -1.5em;         /* Un-indent the first line */
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+}
+
+.json-formatter .json-line {
+    display: flex;
+    white-space: pre; /* To respect leading spaces */
+}
+
+.json-formatter .json-value {
+    white-space: pre-wrap;
+    word-break: break-all;
+    padding-left: 1ch; /* Add a small space after the colon */
 }
 
 #contentModal .modal-content {
