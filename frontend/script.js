@@ -315,13 +315,11 @@ class ChatInterface {
     }
 
     renderDebugLog(log) {
-        let entryDiv = document.getElementById(`log-entry-${log.id}`);
-        if (!entryDiv) {
-            entryDiv = document.createElement('div');
-            entryDiv.id = `log-entry-${log.id}`;
-            entryDiv.className = 'debug-log-entry';
-            this.debugContent.appendChild(entryDiv);
-        }
+        const entryDiv = document.createElement('div');
+        entryDiv.id = `log-entry-${log.id}`;
+        entryDiv.className = 'debug-log-entry';
+        
+        const existingEntry = document.getElementById(entryDiv.id);
 
         entryDiv.dataset.level = log.level;
         entryDiv.dataset.status = log.status;
@@ -340,6 +338,12 @@ class ChatInterface {
             </div>
             ${log.content.type !== 'clickable' ? contentHtml : ''}
         `;
+
+        if (existingEntry) {
+            existingEntry.replaceWith(entryDiv);
+        } else {
+            this.debugContent.appendChild(entryDiv);
+        }
         
         if (log.content.type === 'clickable') {
             entryDiv.querySelector('.clickable-content-btn').addEventListener('click', (e) => {
