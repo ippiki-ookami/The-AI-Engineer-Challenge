@@ -7,7 +7,11 @@ from pydantic import BaseModel
 # Import OpenAI client for interacting with OpenAI's API
 from openai import OpenAI, APIStatusError
 import os
-from typing import Optional
+from typing import Optional, AsyncGenerator
+import json
+
+# Import the debug logger
+from .debug_logger import debug_logger
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
@@ -34,6 +38,10 @@ class ChatRequest(BaseModel):
 class ApiKeyRequest(BaseModel):
     api_key: str
 
+# Helper to format Server-Sent Events (SSE)
+def sse_format(data: dict) -> str:
+    return f"data: {json.dumps(data)}\n\n"
+
 # Define an endpoint to validate the OpenAI API key
 @app.post("/api/validate-key")
 async def validate_key(request: ApiKeyRequest):
@@ -57,33 +65,75 @@ async def validate_key(request: ApiKeyRequest):
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
 async def chat(request: ChatRequest):
-    try:
-        # Initialize OpenAI client with the provided API key
-        client = OpenAI(api_key=request.api_key)
-        
-        # Create an async generator function for streaming responses
-        async def generate():
-            # Create a streaming chat completion request
-            stream = client.chat.completions.create(
-                model=request.model,
-                messages=[
-                    {"role": "developer", "content": request.developer_message},
+    debug_logger.clear()
+
+    async def event_stream() -> AsyncGenerator[str, None]:
+        try:
+            # Log 1: User sends message
+            parent_id = debug_logger.add_log(
+                title="User sends message",
+                content_type="clickable",
+                data={"user_message": request.user_message}
+            )
+            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+
+            # Initialize OpenAI client
+            client = OpenAI(api_key=request.api_key)
+
+            # Log 2: Prepare API Request
+            api_payload = {
+                "model": request.model,
+                "messages": [
+                    {"role": "system", "content": request.developer_message},
                     {"role": "user", "content": request.user_message}
                 ],
-                stream=True  # Enable streaming response
+                "stream": True
+            }
+            debug_logger.add_log(
+                title="Preparing API Request",
+                content_type="clickable",
+                data=api_payload,
+                parent_id=parent_id
             )
+            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+
+            # Log 3: Send to API
+            debug_logger.add_log(title="Sending to OpenAI API...", status="pending", parent_id=parent_id)
+            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+
+            # Create the stream
+            stream = client.chat.completions.create(**api_payload)
             
-            # Yield each chunk of the response as it becomes available
+            # Log 4: Receiving from API
+            debug_logger.logs[-1]["status"] = "success"
+            debug_logger.logs[-1]["title"] = "Sent to OpenAI API"
+            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+            
+            full_response = ""
             for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
-                    yield chunk.choices[0].delta.content
+                    content = chunk.choices[0].delta.content
+                    full_response += content
+                    # Stream chat content
+                    yield sse_format({"type": "chat", "data": content})
+            
+            # Log 5: Message parsed
+            debug_logger.add_log(
+                title="Final message parsed",
+                content_type="clickable",
+                data={"full_response": full_response},
+                parent_id=parent_id
+            )
+            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
 
-        # Return a streaming response to the client
-        return StreamingResponse(generate(), media_type="text/plain")
-    
-    except Exception as e:
-        # Handle any errors that occur during processing
-        raise HTTPException(status_code=500, detail=str(e))
+        except Exception as e:
+            error_message = f"An unexpected error occurred: {e}"
+            debug_logger.add_log(title="Error", status="error", data=error_message)
+            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+            # Also send an error for the chat
+            yield sse_format({"type": "error", "data": str(e)})
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
 
 # Define a health check endpoint to verify API status
 @app.get("/api/health")

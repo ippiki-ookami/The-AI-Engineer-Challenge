@@ -770,4 +770,56 @@ body {
     overflow-y: auto;
     font-size: 0.875rem;
     line-height: 1.6;
+    padding-right: var(--spacing-sm); /* For scrollbar */
+}
+
+/* Debug Log Entries */
+.debug-log-entry {
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 0.5rem;
+    transition: background-color var(--transition-fast);
+    border-left: 3px solid transparent;
+}
+
+.debug-log-entry[data-level='1'] { margin-left: 1rem; }
+.debug-log-entry[data-level='2'] { margin-left: 2rem; }
+.debug-log-entry[data-level='3'] { margin-left: 3rem; }
+
+.debug-log-entry[data-status='success'] { border-left-color: var(--secondary-color); }
+.debug-log-entry[data-status='pending'] { border-left-color: var(--accent-color); }
+.debug-log-entry[data-status='error'] { border-left-color: var(--danger-color); background-color: rgba(239, 68, 68, 0.1); }
+
+.debug-log-title {
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.debug-log-content {
+    margin-top: 0.25rem;
+    padding-left: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.clickable-content-btn {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    color: var(--primary-color);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.75rem;
+    margin-left: auto;
+}
+
+#contentModalBody {
+    white-space: pre-wrap;
+    background: var(--bg-primary);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-md);
+    max-height: 60vh;
+    overflow-y: auto;
 } 

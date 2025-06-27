@@ -43,6 +43,13 @@ class ChatInterface {
 
         // Main Content Area
         this.mainContent = document.getElementById('mainContent');
+        this.debugContent = document.querySelector('#debugPanel .debug-content');
+
+        // Content Modal
+        this.contentModal = document.getElementById('contentModal');
+        this.contentModalTitle = document.getElementById('contentModalTitle');
+        this.contentModalBody = document.getElementById('contentModalBody');
+        this.closeContentModalBtn = document.getElementById('closeContentModal');
     }
 
     bindEvents() {
@@ -76,6 +83,12 @@ class ChatInterface {
         
         // Debug Panel
         this.debugBtn.addEventListener('click', () => this.toggleDebugPanel());
+        
+        // Content Modal
+        this.closeContentModalBtn.addEventListener('click', () => this.closeContentModal());
+        this.contentModal.addEventListener('click', (e) => {
+            if (e.target === this.contentModal) this.closeContentModal();
+        });
         
         // Settings form events
         this.defaultModel.addEventListener('change', (e) => {
@@ -227,10 +240,11 @@ class ChatInterface {
         this.isLoading = true;
         this.addTypingIndicator();
 
+        // Clear previous debug logs
+        this.debugContent.innerHTML = '';
+
         try {
-            const response = await this.callAPI(message);
-            this.removeTypingIndicator();
-            this.addMessage(response, 'assistant');
+            await this.streamChat(message);
         } catch (error) {
             this.removeTypingIndicator();
             this.addErrorMessage(error.message);
@@ -240,8 +254,8 @@ class ChatInterface {
         }
     }
 
-    async callAPI(userMessage) {
-        const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
+    async streamChat(userMessage) {
+        const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -261,20 +275,93 @@ class ChatInterface {
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
-        let fullResponse = '';
+        let assistantMessage = '';
+        let assistantMessageDiv = null;
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
             const chunk = decoder.decode(value);
-            fullResponse += chunk;
-            
-            // Update the last message with streaming content
-            this.updateLastMessage(fullResponse);
+            const lines = chunk.split('\n\n').filter(line => line.startsWith('data: '));
+
+            for (const line of lines) {
+                const jsonStr = line.replace('data: ', '');
+                try {
+                    const parsed = JSON.parse(jsonStr);
+                    if (parsed.type === 'chat') {
+                        assistantMessage += parsed.data;
+                        if (!assistantMessageDiv) {
+                            this.removeTypingIndicator();
+                            assistantMessageDiv = this.addMessage('', 'assistant');
+                        }
+                        this.updateLastMessage(assistantMessage, assistantMessageDiv);
+                    } else if (parsed.type === 'debug') {
+                        this.renderDebugLog(parsed.data);
+                    } else if (parsed.type === 'error') {
+                        this.addErrorMessage(parsed.data);
+                        this.removeTypingIndicator();
+                    }
+                } catch (e) {
+                    console.error('Error parsing stream data:', e);
+                }
+            }
+        }
+        
+        // Final update to conversation history
+        if (assistantMessage) {
+            this.conversation.push({ role: 'assistant', content: assistantMessage });
+        }
+    }
+
+    renderDebugLog(log) {
+        let entryDiv = document.getElementById(`log-entry-${log.id}`);
+        if (!entryDiv) {
+            entryDiv = document.createElement('div');
+            entryDiv.id = `log-entry-${log.id}`;
+            entryDiv.className = 'debug-log-entry';
+            this.debugContent.appendChild(entryDiv);
         }
 
-        return fullResponse;
+        entryDiv.dataset.level = log.level;
+        entryDiv.dataset.status = log.status;
+        
+        let contentHtml = '';
+        if (log.content.type === 'clickable' && log.content.data) {
+            contentHtml = `<button class="clickable-content-btn" data-logid="${log.id}">View</button>`;
+        } else if (log.content.data) {
+            contentHtml = `<div class="debug-log-content">${log.content.data}</div>`;
+        }
+
+        entryDiv.innerHTML = `
+            <div class="debug-log-title">
+                <span>${log.title}</span>
+                ${log.content.type === 'clickable' ? contentHtml : ''}
+            </div>
+            ${log.content.type !== 'clickable' ? contentHtml : ''}
+        `;
+        
+        if (log.content.type === 'clickable') {
+            entryDiv.querySelector('.clickable-content-btn').addEventListener('click', (e) => {
+                this.showContentModal(log);
+            });
+        }
+
+        this.debugContent.scrollTop = this.debugContent.scrollHeight;
+    }
+
+    showContentModal(log) {
+        this.contentModalTitle.textContent = log.title;
+        let content = log.content.data;
+        if (typeof content === 'object') {
+            content = JSON.stringify(content, null, 2);
+        }
+        this.contentModalBody.innerHTML = `<pre><code>${content}</code></pre>`;
+        this.contentModal.classList.add('active');
+    }
+
+    closeContentModal() {
+        this.contentModal.classList.remove('active');
     }
 
     addMessage(content, role) {
@@ -297,8 +384,11 @@ class ChatInterface {
         this.chatMessages.appendChild(messageDiv);
         this.scrollToBottom();
         
-        // Store in conversation history
-        this.conversation.push({ role, content });
+        if (role === 'user') {
+            // Store in conversation history immediately for user
+            this.conversation.push({ role, content });
+        }
+        return messageDiv;
     }
 
     addErrorMessage(message) {
@@ -344,10 +434,9 @@ class ChatInterface {
         }
     }
 
-    updateLastMessage(content) {
-        const lastMessage = this.chatMessages.lastElementChild;
-        if (lastMessage && lastMessage.classList.contains('assistant-message')) {
-            const messageText = lastMessage.querySelector('.message-text');
+    updateLastMessage(content, messageDiv) {
+        if (messageDiv) {
+            const messageText = messageDiv.querySelector('.message-text');
             if (messageText) {
                 messageText.innerHTML = this.formatMessage(content);
                 this.scrollToBottom();
