@@ -46,30 +46,9 @@
                         <div class="message-text">
                             Welcome to the LLM Bootcamp! I'm here to help you learn about RAG, prompt engineering, and other LLM techniques. 
                             <br><br>
-                            <strong>Getting Started:</strong>
-                            <ul>
-                                <li>Enter your OpenAI API key below</li>
-                                <li>Choose your preferred model</li>
-                                <li>Start experimenting with different prompts!</li>
-                            </ul>
+                            To get started, please enter your OpenAI API key.
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- API Key Input -->
-            <div class="api-key-section" id="apiKeySection">
-                <div class="api-key-input">
-                    <i class="fas fa-key"></i>
-                    <input type="password" id="apiKeyInput" placeholder="Enter your OpenAI API key">
-                    <button id="saveApiKey" class="save-key-btn">
-                        <i class="fas fa-save"></i>
-                        Save
-                    </button>
-                </div>
-                <div class="api-key-status" id="apiKeyStatus">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span>API key required to start chatting</span>
                 </div>
             </div>
 
@@ -130,6 +109,29 @@
                     <div class="setting-group">
                         <label>Developer Message (System Prompt):</label>
                         <textarea id="developerMessage" rows="4" placeholder="Enter a system prompt to guide the AI's behavior..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Key Modal -->
+        <div class="modal active" id="apiKeyModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Enter Your OpenAI API Key</h3>
+                </div>
+                <div class="modal-body">
+                    <p class="api-modal-text">You need a valid OpenAI API key to interact with the models. Your key is stored securely in your browser's local storage and is not shared.</p>
+                    <div class="api-key-input" id="modalApiKeyInputSection">
+                        <i class="fas fa-key"></i>
+                        <input type="password" id="apiKeyInput" placeholder="Enter your OpenAI API key (sk-...)">
+                        <button id="saveApiKey" class="save-key-btn">
+                            <i class="fas fa-save"></i>
+                            Save & Validate
+                        </button>
+                    </div>
+                    <div class="api-key-status" id="apiKeyStatus">
+                        <!-- Status messages will be shown here -->
                     </div>
                 </div>
             </div>

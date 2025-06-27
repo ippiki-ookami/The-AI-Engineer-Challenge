@@ -153,15 +153,22 @@ body {
     max-width: 960px; /* Smaller container */
     margin: 0 auto;
     width: 100%;
-    padding: 0 var(--spacing-lg);
+    padding: 0 var(--spacing-lg) var(--spacing-lg); /* Add bottom padding */
     overflow: hidden;
 }
 
 .chat-messages {
     flex: 1;
     overflow-y: auto;
-    padding: var(--spacing-lg) var(--spacing-sm) var(--spacing-lg) 0;
+    padding: var(--spacing-lg);
     scroll-behavior: smooth;
+    background: var(--bg-secondary); /* Add backdrop */
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-inner, inset 0 2px 4px 0 rgba(0,0,0,0.05));
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -183,7 +190,9 @@ body {
 
 /* Messages */
 .message {
-    margin-bottom: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+    max-width: 80%;
     animation: messageSlideIn 0.3s ease-out;
 }
 
@@ -244,9 +253,27 @@ body {
 }
 
 /* System Message */
+.system-message {
+    align-self: center;
+    text-align: center;
+    max-width: 100%;
+}
+
 .system-message .message-content {
-    background: var(--bg-secondary);
-    border-color: var(--primary-color);
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+
+/* User & Assistant alignment */
+.user-message {
+    align-self: flex-end;
+    align-items: flex-end;
+}
+
+.assistant-message {
+    align-self: flex-start;
+    align-items: flex-start;
 }
 
 /* User Message */
@@ -269,21 +296,27 @@ body {
     color: white;
 }
 
-/* API Key Section */
-.api-key-section {
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-xl);
-    padding: var(--spacing-lg);
+/* API Key Section is now a modal */
+.api-modal-text {
     margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+#apiKeyModal .modal-content {
+    max-width: 550px;
+}
+
+#apiKeyModal .modal-header {
+    text-align: center;
+    justify-content: center;
 }
 
 .api-key-input {
     display: flex;
     align-items: center;
     gap: var(--spacing-md);
-    margin-bottom: var(--spacing-md);
 }
 
 .api-key-input i {
@@ -328,21 +361,33 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
+.save-key-btn:disabled {
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 .api-key-status {
+    margin-top: var(--spacing-lg);
+    min-height: 24px;
+}
+
+.api-key-status-message {
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
-    color: var(--text-muted);
-    font-size: 0.875rem;
+    font-weight: 500;
 }
 
-.api-key-status i {
-    color: var(--accent-color);
-}
+.api-key-status-message.success { color: var(--secondary-color); }
+.api-key-status-message.error { color: var(--danger-color); }
+.api-key-status-message.loading, .api-key-status-message.warning { color: var(--text-secondary); }
 
 /* Input Container */
 .input-container {
-    padding: var(--spacing-lg) 0;
+    padding: var(--spacing-lg) 0 0; /* Remove bottom padding */
     border-top: 1px solid var(--border-color);
 }
 

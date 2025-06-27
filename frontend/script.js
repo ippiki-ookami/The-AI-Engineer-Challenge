@@ -19,19 +19,21 @@ class ChatInterface {
         this.chatMessages = document.getElementById('chatMessages');
         this.messageInput = document.getElementById('messageInput');
         this.sendButton = document.getElementById('sendButton');
-        this.apiKeyInput = document.getElementById('apiKeyInput');
-        this.apiKeySection = document.getElementById('apiKeySection');
-        this.apiKeyStatus = document.getElementById('apiKeyStatus');
         this.loadingOverlay = document.getElementById('loadingOverlay');
         this.modelSelect = document.getElementById('modelSelect');
         
+        // API key modal
+        this.apiKeyModal = document.getElementById('apiKeyModal');
+        this.apiKeyInput = document.getElementById('apiKeyInput');
+        this.saveApiKeyBtn = document.getElementById('saveApiKey');
+        this.apiKeyStatus = document.getElementById('apiKeyStatus');
+
         // Settings modal
         this.settingsModal = document.getElementById('settingsModal');
         this.defaultModel = document.getElementById('defaultModel');
         this.developerMessageInput = document.getElementById('developerMessage');
         
         // Buttons
-        this.saveApiKeyBtn = document.getElementById('saveApiKey');
         this.clearChatBtn = document.getElementById('clearChat');
         this.settingsBtn = document.getElementById('settings');
         this.closeSettingsBtn = document.getElementById('closeSettings');
@@ -56,7 +58,6 @@ class ChatInterface {
         // Model selection
         this.modelSelect.addEventListener('change', (e) => {
             this.currentModel = e.target.value;
-            this.updateUI();
         });
         
         // Clear chat
@@ -73,7 +74,7 @@ class ChatInterface {
         this.defaultModel.addEventListener('change', (e) => {
             this.currentModel = e.target.value;
             this.modelSelect.value = e.target.value;
-            this.updateUI();
+            localStorage.setItem('default_model', this.currentModel);
         });
         
         this.developerMessageInput.addEventListener('input', (e) => {
@@ -99,70 +100,96 @@ class ChatInterface {
         this.modelSelect.value = savedModel;
         this.defaultModel.value = savedModel;
         this.developerMessageInput.value = this.developerMessage;
+
+        if (this.apiKey) {
+            this.validateApiKey(this.apiKey, true);
+        }
     }
 
     updateUI() {
-        // Update API key section visibility
         if (this.apiKey) {
-            this.apiKeySection.classList.add('hidden');
-            this.sendButton.disabled = false;
-            this.updateApiKeyStatus('API key saved', 'success');
+            this.apiKeyModal.classList.remove('active');
+            this.messageInput.disabled = false;
         } else {
-            this.apiKeySection.classList.remove('hidden');
+            this.apiKeyModal.classList.add('active');
+            this.messageInput.disabled = true;
             this.sendButton.disabled = true;
-            this.updateApiKeyStatus('API key required to start chatting', 'warning');
         }
-        
-        // Update model selector
-        this.modelSelect.value = this.currentModel;
+        this.handleInputChange();
     }
 
     updateApiKeyStatus(message, type) {
-        const icon = this.apiKeyStatus.querySelector('i');
-        const text = this.apiKeyStatus.querySelector('span');
+        this.apiKeyStatus.innerHTML = ''; // Clear previous status
+        const statusDiv = document.createElement('div');
+        statusDiv.className = `api-key-status-message ${type}`;
         
-        text.textContent = message;
-        
-        // Update icon and color based on type
+        const icon = document.createElement('i');
         icon.className = 'fas';
+
         if (type === 'success') {
             icon.classList.add('fa-check-circle');
-            this.apiKeyStatus.style.color = 'var(--secondary-color)';
         } else if (type === 'warning') {
             icon.classList.add('fa-exclamation-triangle');
-            this.apiKeyStatus.style.color = 'var(--accent-color)';
         } else if (type === 'error') {
             icon.classList.add('fa-times-circle');
-            this.apiKeyStatus.style.color = 'var(--danger-color)';
+        } else if (type === 'loading') {
+            icon.classList.add('fa-spinner', 'fa-spin');
         }
+        
+        const text = document.createElement('span');
+        text.textContent = message;
+        
+        statusDiv.appendChild(icon);
+        statusDiv.appendChild(text);
+        this.apiKeyStatus.appendChild(statusDiv);
     }
 
-    saveApiKey() {
+    async saveApiKey() {
         const apiKey = this.apiKeyInput.value.trim();
-        
         if (!apiKey) {
-            this.updateApiKeyStatus('Please enter an API key', 'error');
+            this.updateApiKeyStatus('Please enter an API key.', 'error');
             return;
         }
-        
-        // Basic validation (OpenAI API keys start with 'sk-')
-        if (!apiKey.startsWith('sk-')) {
-            this.updateApiKeyStatus('Invalid API key format', 'error');
-            return;
+        await this.validateApiKey(apiKey);
+    }
+
+    async validateApiKey(apiKey, isInitialLoad = false) {
+        this.updateApiKeyStatus('Validating key...', 'loading');
+        this.saveApiKeyBtn.disabled = true;
+
+        try {
+            const response = await fetch(`${this.apiBaseUrl}/api/validate-key`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ api_key: apiKey }),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Invalid API Key');
+            }
+            
+            this.apiKey = apiKey;
+            localStorage.setItem('openai_api_key', apiKey);
+            if (!isInitialLoad) {
+                this.updateApiKeyStatus('API key validated successfully!', 'success');
+            }
+            
+            setTimeout(() => this.updateUI(), isInitialLoad ? 0 : 1000);
+
+        } catch (error) {
+            localStorage.removeItem('openai_api_key');
+            this.apiKey = '';
+            this.updateApiKeyStatus(error.message, 'error');
+            this.updateUI();
+        } finally {
+            this.saveApiKeyBtn.disabled = false;
         }
-        
-        this.apiKey = apiKey;
-        localStorage.setItem('openai_api_key', apiKey);
-        this.updateUI();
-        this.updateApiKeyStatus('API key saved successfully', 'success');
-        
-        // Clear the input
-        this.apiKeyInput.value = '';
     }
 
     handleInputChange() {
         const hasText = this.messageInput.value.trim().length > 0;
-        this.sendButton.disabled = !hasText || !this.apiKey;
+        this.sendButton.disabled = !hasText || !this.apiKey || this.isLoading;
     }
 
     handleKeyDown(e) {

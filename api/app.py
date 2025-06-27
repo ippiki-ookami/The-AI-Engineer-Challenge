@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 # Import Pydantic for data validation and settings management
 from pydantic import BaseModel
 # Import OpenAI client for interacting with OpenAI's API
-from openai import OpenAI
+from openai import OpenAI, APIStatusError
 import os
 from typing import Optional
 
@@ -27,8 +27,32 @@ app.add_middleware(
 class ChatRequest(BaseModel):
     developer_message: str  # Message from the developer/system
     user_message: str      # Message from the user
-    model: Optional[str] = "gpt-4.1-mini"  # Optional model selection with default
+    model: str = "gpt-4.1-mini"  # Optional model selection with default
     api_key: str          # OpenAI API key for authentication
+
+# Define a Pydantic model for API key validation requests
+class ApiKeyRequest(BaseModel):
+    api_key: str
+
+# Define an endpoint to validate the OpenAI API key
+@app.post("/api/validate-key")
+async def validate_key(request: ApiKeyRequest):
+    try:
+        # Initialize OpenAI client with the provided API key
+        client = OpenAI(api_key=request.api_key)
+        # Make a lightweight API call to check if the key is valid
+        client.models.list()
+        # If the call succeeds, the key is valid
+        return {"status": "ok"}
+    except APIStatusError as e:
+        # Handle authentication errors specifically
+        if e.status_code == 401:
+            raise HTTPException(status_code=401, detail="Invalid OpenAI API key.")
+        # Handle other API errors
+        raise HTTPException(status_code=500, detail=f"An API error occurred: {e}")
+    except Exception as e:
+        # Handle other exceptions (e.g., network issues)
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
 
 # Define the main chat endpoint that handles POST requests
 @app.post("/api/chat")
