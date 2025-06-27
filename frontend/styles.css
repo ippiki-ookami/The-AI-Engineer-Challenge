@@ -402,12 +402,23 @@ body {
 .input-container {
     padding: var(--spacing-lg) 0 0; /* Remove bottom padding */
     border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: center;
+    width: 100%;
 }
 
 .input-wrapper {
+    width: 960px;
+    max-width: 100%;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+}
+
+.main-content.debug-open ~ .input-container .input-wrapper {
+    width: 65%;
+    max-width: 65vw;
 }
 
 .message-input-container {
