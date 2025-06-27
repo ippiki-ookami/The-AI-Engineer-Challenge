@@ -31,9 +31,9 @@ class DebugLogger:
         self.logs.append(log_entry)
         return self.current_id
 
-    def start_section(self, title: str, data: Any = None, content_type: str = "clickable"):
+    def start_section(self, title: str, parent_id: Optional[int] = None, data: Any = None, content_type: str = "clickable"):
+        parent_id = self.add_log(title, content_type=content_type, data=data, parent_id=parent_id)
         self.level += 1
-        parent_id = self.add_log(title, content_type=content_type, data=data)
         return parent_id
 
     def end_section(self):

@@ -69,18 +69,20 @@ async def chat(request: ChatRequest):
 
     async def event_stream() -> AsyncGenerator[str, None]:
         try:
-            # Log 1: User sends message
+            # Main section for the entire request
             parent_id = debug_logger.add_log(
-                title="User sends message",
+                title="Chat request initiated",
                 content_type="clickable",
-                data={"user_message": request.user_message}
+                data={"user_message": request.user_message, "model": request.model}
             )
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
 
-            # Initialize OpenAI client
+            # Start a nested section for API interaction
+            debug_logger.start_section("Processing via OpenAI", parent_id=parent_id)
+            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+
             client = OpenAI(api_key=request.api_key)
 
-            # Log 2: Prepare API Request
             api_payload = {
                 "model": request.model,
                 "messages": [
@@ -90,23 +92,20 @@ async def chat(request: ChatRequest):
                 "stream": True
             }
             debug_logger.add_log(
-                title="Preparing API Request",
+                title="Prepared API Request",
                 content_type="clickable",
                 data=api_payload,
-                parent_id=parent_id
+                parent_id=debug_logger.logs[-1]['id']
             )
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
 
-            # Log 3: Send to API
-            debug_logger.add_log(title="Sending to OpenAI API...", status="pending", parent_id=parent_id)
+            debug_logger.add_log(title="Sending to API...", status="pending", parent_id=debug_logger.logs[-2]['id'])
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
 
-            # Create the stream
             stream = client.chat.completions.create(**api_payload)
             
-            # Log 4: Receiving from API
             debug_logger.logs[-1]["status"] = "success"
-            debug_logger.logs[-1]["title"] = "Sent to OpenAI API"
+            debug_logger.logs[-1]["title"] = "Stream opened with API"
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
             
             full_response = ""
@@ -114,10 +113,11 @@ async def chat(request: ChatRequest):
                 if chunk.choices[0].delta.content is not None:
                     content = chunk.choices[0].delta.content
                     full_response += content
-                    # Stream chat content
                     yield sse_format({"type": "chat", "data": content})
             
-            # Log 5: Message parsed
+            # End the nested section
+            debug_logger.end_section()
+
             debug_logger.add_log(
                 title="Final message parsed",
                 content_type="clickable",
@@ -127,10 +127,10 @@ async def chat(request: ChatRequest):
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
 
         except Exception as e:
+            debug_logger.end_section() # Ensure section is closed on error
             error_message = f"An unexpected error occurred: {e}"
             debug_logger.add_log(title="Error", status="error", data=error_message)
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
-            # Also send an error for the chat
             yield sse_format({"type": "error", "data": str(e)})
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")

@@ -155,19 +155,16 @@ body {
 
 /* Chat Container */
 .chat-container {
-    flex-shrink: 0; /* Prevent shrinking by default */
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
-    width: 960px; /* smaller container */
+    width: 100%; /* Occupy full width of parent by default */
     max-width: 100%;
     transition: width var(--transition-normal);
-    margin: 0 auto;
-    padding: var(--spacing-lg) var(--spacing-lg) var(--spacing-lg); /* Add top padding */
-    overflow: hidden;
 }
 
 .main-content.debug-open .chat-container {
-    width: 65%; /* Shrink when debug panel is open */
+    width: 60%; /* Shrink to 60% when debug is open */
 }
 
 .chat-messages {
@@ -408,12 +405,18 @@ body {
 }
 
 .input-wrapper {
-    width: 960px;
-    max-width: 100%;
+    width: 75vw; /* Match the main content width */
+    max-width: 960px; /* Keep a comfortable max-width for typing */
     margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
+    transition: all var(--transition-normal);
+}
+
+.main-content.debug-open ~ .input-container .input-wrapper {
+    width: 45vw; /* (60% of 75vw) to align with chat-container */
+    margin-left: calc(12.5vw + var(--spacing-lg)); /* Center align with the chat container */
 }
 
 .message-input-container {
@@ -729,7 +732,9 @@ body {
     justify-content: center;
     align-items: stretch;
     gap: var(--spacing-lg);
-    width: 100%;
+    width: 75vw; /* Make the total content area larger */
+    max-width: 1800px; /* Set a max-width for very large screens */
+    margin: 0 auto; /* Center the entire group */
     padding: var(--spacing-lg);
     overflow: hidden;
     transition: all var(--transition-normal);
@@ -750,7 +755,7 @@ body {
 }
 
 .main-content.debug-open .debug-panel {
-    width: 35%; /* Expand when open */
+    width: 40%; /* Expand to 40% when open */
     opacity: 1;
     padding: var(--spacing-lg);
 }
