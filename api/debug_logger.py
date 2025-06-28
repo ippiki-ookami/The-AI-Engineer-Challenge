@@ -154,12 +154,12 @@ class DebugLogger:
                     error_data["function_name"] = func.__name__
                     error_data["optional_failure"] = str(optional)
                     
-                    # Update the log entry to be clickable
+                    # Update the log entry to be clickable and trigger status callback
+                    self.update_log_status(log_id, "error", error_data)
+                    # Also ensure it's clickable
                     for log in self.logs:
                         if log["id"] == log_id:
-                            log["status"] = "error"
                             log["content"]["type"] = "clickable"  # Make errors clickable
-                            log["content"]["data"] = error_data
                             break
                     
                     # Only re-raise if this is not an optional function
@@ -240,12 +240,12 @@ class DebugLogger:
                     error_data["function_name"] = func.__name__
                     error_data["optional_failure"] = str(optional)
                     
-                    # Update the log entry to be clickable
+                    # Update the log entry to be clickable and trigger status callback
+                    self.update_log_status(log_id, "error", error_data)
+                    # Also ensure it's clickable
                     for log in self.logs:
                         if log["id"] == log_id:
-                            log["status"] = "error"
                             log["content"]["type"] = "clickable"  # Make errors clickable
-                            log["content"]["data"] = error_data
                             break
                     
                     # Only re-raise if this is not an optional function

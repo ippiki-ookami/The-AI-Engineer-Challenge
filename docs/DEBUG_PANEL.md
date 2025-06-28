@@ -208,6 +208,7 @@ async def call_required_api():
 - Pipeline continues even if the function fails
 - Use for data gathering from multiple sources, enhancement features, fallback operations
 - Function returns `None` on failure, pipeline continues
+- **Still show as red errors** in debug panel with full clickable error details
 
 ```python
 @debug_track("Optional Data Source", optional=True)
@@ -275,3 +276,7 @@ except ImportError:
 #### **Issue: Pipeline continuing when critical function fails**
 - **Cause:** Function incorrectly marked as `optional=True`
 - **Solution:** Remove `optional=True` for functions that must succeed for pipeline to work
+
+#### **Issue: Optional function failures staying yellow (not showing red error)**
+- **Cause:** Status callback not being triggered for error state updates
+- **Solution:** Ensure `update_log_status()` method is used instead of direct log manipulation

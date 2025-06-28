@@ -122,6 +122,8 @@ async def validate_external_source():
     return await validation_service()
 ```
 
+**Important:** Optional functions that fail will still show as **red errors** in the debug panel with full clickable error details - the only difference is that the pipeline continues executing instead of stopping.
+
 #### **Handling Optional Function Results:**
 ```python
 # Optional functions return None when they fail
