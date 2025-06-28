@@ -6,7 +6,7 @@ class ChatInterface {
         this.isLoading = false;
         this.currentModel = 'gpt-4.1-mini';
         this.developerMessage = localStorage.getItem('developer_message') || 'You are a helpful AI assistant for an LLM bootcamp. Help students learn about RAG, prompt engineering, and other LLM techniques. Be clear, educational, and provide practical examples.';
-        this.apiBaseUrl = 'http://localhost:8000'; // Backend API server URL
+        this.apiBaseUrl = ''; // Backend API server URL
         
         this.initializeElements();
         this.bindEvents();
@@ -45,11 +45,21 @@ class ChatInterface {
         this.mainContent = document.getElementById('mainContent');
         this.debugContent = document.querySelector('#debugPanel .debug-content');
 
-        // Content Modal
+        // Content Modal (keeping for compatibility, but will replace with debug viewer)
         this.contentModal = document.getElementById('contentModal');
         this.contentModalTitle = document.getElementById('contentModalTitle');
         this.contentModalBody = document.getElementById('contentModalBody');
         this.closeContentModalBtn = document.getElementById('closeContentModal');
+
+        // Debug Entry Viewer (new system)
+        this.debugViewer = {
+            isActive: false,
+            currentLogId: null,
+            currentIndex: 0,
+            allLogs: [],
+            logData: new Map(), // Store log data by ID
+            savedChatContent: null // Store chat messages when viewing debug entries
+        };
     }
 
     bindEvents() {
@@ -240,8 +250,13 @@ class ChatInterface {
         this.isLoading = true;
         this.addTypingIndicator();
 
-        // Clear previous debug logs
+        // Clear previous debug logs and viewer data
         this.debugContent.innerHTML = '';
+        this.debugViewer.logData.clear();
+        this.debugViewer.savedChatContent = null; // Clear saved chat content
+        if (this.debugViewer.isActive) {
+            this.exitDebugViewer();
+        }
 
         try {
             await this.streamChat(message);
@@ -315,6 +330,9 @@ class ChatInterface {
     }
 
     renderDebugLog(log) {
+        // Store log data for navigation
+        this.debugViewer.logData.set(log.id, log);
+        
         const entryDiv = document.createElement('div');
         entryDiv.id = `log-entry-${log.id}`;
         entryDiv.className = 'debug-log-entry';
@@ -346,58 +364,318 @@ class ChatInterface {
         }
         
         if (log.content.type === 'clickable') {
-            entryDiv.querySelector('.clickable-content-btn').addEventListener('click', (e) => {
-                this.showContentModal(log);
+            entryDiv.querySelector('.clickable-content-btn').addEventListener('click', () => {
+                this.showDebugEntry(log);
             });
         }
 
         this.debugContent.scrollTop = this.debugContent.scrollHeight;
     }
 
-    showContentModal(log) {
-        this.contentModalTitle.textContent = log.title;
-        let content = log.content.data;
-        this.contentModalBody.innerHTML = ''; // Clear previous content
+    showDebugEntry(log) {
+        // Update debug viewer state
+        this.debugViewer.isActive = true;
+        this.debugViewer.currentLogId = log.id;
+        
+        // Get all clickable logs for navigation
+        this.debugViewer.allLogs = Array.from(this.debugContent.querySelectorAll('.debug-log-entry'))
+            .map(entry => {
+                const id = parseInt(entry.id.replace('log-entry-', ''));
+                const clickableBtn = entry.querySelector('.clickable-content-btn');
+                return clickableBtn ? id : null;
+            })
+            .filter(id => id !== null);
+        
+        this.debugViewer.currentIndex = this.debugViewer.allLogs.indexOf(log.id);
+        
+        // Show the debug entry in the chat window
+        this.displayDebugEntryInChatWindow(log);
+        
+        // Add blur to background and highlight current entry
+        this.enterDebugViewerMode();
+    }
 
+    displayDebugEntryInChatWindow(log) {
+        // Save current chat content if not already saved
+        if (!this.debugViewer.savedChatContent) {
+            this.debugViewer.savedChatContent = this.chatMessages.innerHTML;
+        }
+        
+        // Clear chat messages and show debug entry
+        this.chatMessages.innerHTML = '';
+        
+        // Create debug entry display
+        const debugDisplay = document.createElement('div');
+        debugDisplay.className = 'debug-entry-display';
+        debugDisplay.id = 'debugEntryDisplay';
+        
+        // Create header with close button
+        const header = document.createElement('div');
+        header.className = 'debug-entry-header';
+        
+        let title = log.title;
+        if (log.function_name) {
+            title = `${log.title} (${log.function_name})`;
+        }
+        
+        header.innerHTML = `
+            <h3>${title}</h3>
+            <button class="debug-entry-close" id="debugEntryClose">
+                <i class="fas fa-times"></i>
+            </button>
+        `;
+        
+        // Create content area
+        const contentArea = document.createElement('div');
+        contentArea.className = 'debug-entry-content';
+        
+        // Add function info if available
+        if (log.function_name) {
+            const functionInfo = document.createElement('div');
+            functionInfo.className = 'function-info';
+            functionInfo.innerHTML = `
+                <div class="function-header">
+                    <i class="fas fa-code"></i>
+                    <strong>Function:</strong> <code>${log.function_name}</code>
+                </div>
+                <div class="function-status status-${log.status}">
+                    <i class="fas ${log.status === 'success' ? 'fa-check-circle' : 
+                                   log.status === 'error' ? 'fa-times-circle' : 
+                                   'fa-clock'}"></i>
+                    Status: ${log.status.charAt(0).toUpperCase() + log.status.slice(1)}
+                </div>
+            `;
+            contentArea.appendChild(functionInfo);
+            
+            const separator = document.createElement('hr');
+            separator.className = 'modal-separator';
+            contentArea.appendChild(separator);
+        }
+
+        // Add main content
+        const content = log.content.data;
         if (typeof content === 'object') {
-            const jsonString = JSON.stringify(content, null, 2);
-            const container = document.createElement('div');
-            container.className = 'json-formatter';
-
-            const lines = jsonString.split('\n');
-            lines.forEach(line => {
-                const lineDiv = document.createElement('div');
-                lineDiv.className = 'json-line';
-                
-                const colonIndex = line.indexOf(':');
-                // Check if it's a key-value pair (and not a time string in a value)
-                if (colonIndex > -1 && line.substring(0, colonIndex).includes('"')) {
-                    const keyPart = line.substring(0, colonIndex + 1);
-                    const valuePart = line.substring(colonIndex + 1);
-
-                    const keySpan = document.createElement('span');
-                    keySpan.className = 'json-key';
-                    keySpan.textContent = keyPart;
-
-                    const valueSpan = document.createElement('span');
-                    valueSpan.className = 'json-value';
-                    valueSpan.textContent = valuePart;
-                    
-                    lineDiv.appendChild(keySpan);
-                    lineDiv.appendChild(valueSpan);
-                } else {
-                    lineDiv.textContent = line;
-                }
-                container.appendChild(lineDiv);
-            });
-            this.contentModalBody.appendChild(container);
+            if (content.error_message && content.full_traceback) {
+                this.renderErrorContent(content, contentArea);
+            } else {
+                this.renderJsonContent(content, contentArea);
+            }
         } else {
             const pre = document.createElement('pre');
             pre.textContent = content;
-            this.contentModalBody.appendChild(pre);
+            contentArea.appendChild(pre);
         }
         
-        this.contentModal.classList.add('active');
+        debugDisplay.appendChild(header);
+        debugDisplay.appendChild(contentArea);
+        this.chatMessages.appendChild(debugDisplay);
+        
+        // Add close button event
+        document.getElementById('debugEntryClose').addEventListener('click', () => {
+            this.exitDebugViewer();
+        });
+    }
+
+    enterDebugViewerMode() {
+        // Add blur to main content except debug panel and chat window
+        document.body.classList.add('debug-viewer-active');
+        
+        // Disable input field to prevent accidental usage
+        this.messageInput.disabled = true;
+        this.sendButton.disabled = true;
+        
+        // Highlight current entry in debug panel
+        this.highlightDebugEntry(this.debugViewer.currentLogId);
+    }
+
+    exitDebugViewer() {
+        // Reset viewer state
+        this.debugViewer.isActive = false;
+        this.debugViewer.currentLogId = null;
+        
+        // Remove blur and highlighting
+        document.body.classList.remove('debug-viewer-active');
+        this.removeDebugHighlight();
+        
+        // Re-enable input field
+        this.messageInput.disabled = false;
+        this.handleInputChange(); // Update send button state
+        
+        // Clear the debug display
+        const debugDisplay = document.getElementById('debugEntryDisplay');
+        if (debugDisplay) {
+            debugDisplay.remove();
+        }
+        
+        // Restore the actual chat messages
+        this.restoreChatMessages();
+    }
+
+    navigateDebugEntry(direction) {
+        if (!this.debugViewer.isActive || this.debugViewer.allLogs.length === 0) return;
+        
+        // Calculate new index
+        let newIndex = this.debugViewer.currentIndex + direction;
+        
+        // Wrap around
+        if (newIndex < 0) newIndex = this.debugViewer.allLogs.length - 1;
+        if (newIndex >= this.debugViewer.allLogs.length) newIndex = 0;
+        
+        this.debugViewer.currentIndex = newIndex;
+        this.debugViewer.currentLogId = this.debugViewer.allLogs[newIndex];
+        
+        // Get the stored log data and display it
+        this.showDebugEntryById(this.debugViewer.currentLogId);
+    }
+
+    showDebugEntryById(logId) {
+        // Get stored log data
+        const logData = this.debugViewer.logData.get(logId);
+        if (logData) {
+            // Update the display with the new log data
+            this.displayDebugEntryInChatWindow(logData);
+            
+            // Update highlighting
+            this.highlightDebugEntry(logId);
+        }
+    }
+
+    highlightDebugEntry(logId) {
+        // Remove previous highlights
+        this.removeDebugHighlight();
+        
+        // Add highlight to current entry
+        const entry = document.getElementById(`log-entry-${logId}`);
+        if (entry) {
+            entry.classList.add('debug-entry-highlighted');
+        }
+    }
+
+    removeDebugHighlight() {
+        const highlighted = this.debugContent.querySelectorAll('.debug-entry-highlighted');
+        highlighted.forEach(entry => entry.classList.remove('debug-entry-highlighted'));
+    }
+
+    restoreChatMessages() {
+        // Restore the saved chat content
+        if (this.debugViewer.savedChatContent) {
+            this.chatMessages.innerHTML = this.debugViewer.savedChatContent;
+            this.debugViewer.savedChatContent = null; // Clear saved content
+        } else {
+            // Fallback if no content was saved (shouldn't happen normally)
+            this.chatMessages.innerHTML = `
+                <div class="message system-message">
+                    <div class="message-content">
+                        <div class="message-text">
+                            <i class="fas fa-info-circle"></i>
+                            Welcome back to the chat!
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Scroll to bottom to show latest messages
+        this.scrollToBottom();
+    }
+
+    renderErrorContent(errorData, container = null) {
+        const targetContainer = container || this.contentModalBody;
+        
+        // Create error summary section
+        const errorSummary = document.createElement('div');
+        errorSummary.className = 'error-summary';
+        errorSummary.innerHTML = `
+            <div class="error-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Error Details</strong>
+            </div>
+            <div class="error-message">
+                <strong>Message:</strong> ${this.escapeHtml(errorData.error_message)}
+            </div>
+            <div class="error-type">
+                <strong>Type:</strong> <code>${errorData.error_type}</code>
+            </div>
+        `;
+        targetContainer.appendChild(errorSummary);
+
+        // Add separator
+        const separator1 = document.createElement('hr');
+        separator1.className = 'modal-separator';
+        targetContainer.appendChild(separator1);
+
+        // Add input data if available
+        if (errorData.developer_message || errorData.user_message || errorData.model) {
+            const inputSection = document.createElement('div');
+            inputSection.className = 'error-input-section';
+            inputSection.innerHTML = '<h4><i class="fas fa-info-circle"></i> Input Data</h4>';
+            
+            const inputData = {};
+            ['developer_message', 'user_message', 'model'].forEach(key => {
+                if (errorData[key]) inputData[key] = errorData[key];
+            });
+            
+            this.renderJsonContent(inputData, inputSection);
+            targetContainer.appendChild(inputSection);
+
+            const separator2 = document.createElement('hr');
+            separator2.className = 'modal-separator';
+            targetContainer.appendChild(separator2);
+        }
+
+        // Add full traceback section
+        const tracebackSection = document.createElement('div');
+        tracebackSection.className = 'traceback-section';
+        tracebackSection.innerHTML = `
+            <h4><i class="fas fa-bug"></i> Full Traceback</h4>
+            <pre class="traceback-content">${this.escapeHtml(errorData.full_traceback)}</pre>
+        `;
+        targetContainer.appendChild(tracebackSection);
+    }
+
+    renderJsonContent(content, container = null) {
+        const jsonString = JSON.stringify(content, null, 2);
+        const jsonContainer = document.createElement('div');
+        jsonContainer.className = 'json-formatter';
+
+        const lines = jsonString.split('\n');
+        lines.forEach(line => {
+            const lineDiv = document.createElement('div');
+            lineDiv.className = 'json-line';
+            
+            const colonIndex = line.indexOf(':');
+            // Check if it's a key-value pair (and not a time string in a value)
+            if (colonIndex > -1 && line.substring(0, colonIndex).includes('"')) {
+                const keyPart = line.substring(0, colonIndex + 1);
+                const valuePart = line.substring(colonIndex + 1);
+
+                const keySpan = document.createElement('span');
+                keySpan.className = 'json-key';
+                keySpan.textContent = keyPart;
+
+                const valueSpan = document.createElement('span');
+                valueSpan.className = 'json-value';
+                valueSpan.textContent = valuePart;
+                
+                lineDiv.appendChild(keySpan);
+                lineDiv.appendChild(valueSpan);
+            } else {
+                lineDiv.textContent = line;
+            }
+            jsonContainer.appendChild(lineDiv);
+        });
+        
+        if (container) {
+            container.appendChild(jsonContainer);
+        } else {
+            this.contentModalBody.appendChild(jsonContainer);
+        }
+    }
+
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     closeContentModal() {
@@ -497,7 +775,7 @@ class ChatInterface {
         this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
     }
 
-    showLoading(show) {
+    showLoading() {
         // No longer needed; do nothing
     }
 
@@ -615,11 +893,26 @@ document.addEventListener('keydown', (e) => {
         window.chatInterface.clearChat();
     }
     
-    // Escape to close modals
+    // Escape to close modals or debug viewer
     if (e.key === 'Escape') {
-        const modal = document.getElementById('settingsModal');
-        if (modal.classList.contains('active')) {
-            window.chatInterface.closeSettings();
+        if (window.chatInterface.debugViewer.isActive) {
+            window.chatInterface.exitDebugViewer();
+        } else {
+            const modal = document.getElementById('settingsModal');
+            if (modal.classList.contains('active')) {
+                window.chatInterface.closeSettings();
+            }
+        }
+    }
+    
+    // Arrow key navigation for debug viewer
+    if (window.chatInterface.debugViewer.isActive) {
+        if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            window.chatInterface.navigateDebugEntry(-1);
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            window.chatInterface.navigateDebugEntry(1);
         }
     }
 }); 

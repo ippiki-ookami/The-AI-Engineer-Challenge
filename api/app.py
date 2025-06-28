@@ -9,9 +9,16 @@ from openai import OpenAI, APIStatusError
 import os
 from typing import Optional, AsyncGenerator
 import json
+import asyncio
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 
 # Import the debug logger
-from debug_logger import debug_logger
+try:
+    from .debug_logger import debug_logger, debug_track
+except ImportError:
+    # Fallback for when running directly
+    from debug_logger import debug_logger, debug_track
 
 # Initialize FastAPI application with a title
 app = FastAPI(title="OpenAI Chat API")
@@ -42,6 +49,57 @@ class ApiKeyRequest(BaseModel):
 def sse_format(data: dict) -> str:
     return f"data: {json.dumps(data)}\n\n"
 
+# Helper functions with debug tracking
+@debug_track("Preparing OpenAI API Request")
+async def prepare_api_request(developer_message: str, user_message: str, model: str):
+    """Prepare the API request payload for OpenAI"""
+    # Small delay to ensure pending status is visible
+    await asyncio.sleep(0.1)
+    
+    return {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": developer_message},
+            {"role": "user", "content": user_message}
+        ],
+        "stream": True
+    }
+
+@debug_track("Calling OpenAI API", track_result=False)
+async def call_openai_api(client, api_payload):
+    """Make the actual API call to OpenAI"""
+    # Small delay to ensure pending status is visible
+    await asyncio.sleep(0.1)
+    
+    return client.chat.completions.create(**api_payload)
+
+@debug_track("Testing Yellow Status (3 Second Wait)")
+async def test_yellow_status():
+    """Test function that waits 3 seconds to show yellow status"""
+    await asyncio.sleep(3.0)
+    return {"test": "Yellow status should be visible for 3 seconds"}
+
+@debug_track("Processing Response Stream")
+async def process_response_stream(stream):
+    """Process the streaming response from OpenAI"""
+    # Small delay to ensure pending status is visible
+    await asyncio.sleep(0.1)
+    
+    full_response = ""
+    chunk_count = 0
+    
+    for chunk in stream:
+        if chunk.choices[0].delta.content is not None:
+            content = chunk.choices[0].delta.content
+            full_response += content
+            chunk_count += 1
+    
+    return {
+        "full_response": full_response,
+        "chunk_count": chunk_count,
+        "response_length": len(full_response)
+    }
+
 # Define an endpoint to validate the OpenAI API key
 @app.post("/api/validate-key")
 async def validate_key(request: ApiKeyRequest):
@@ -69,46 +127,84 @@ async def chat(request: ChatRequest):
 
     async def event_stream() -> AsyncGenerator[str, None]:
         try:
-            # Log 1: User sends message
-            parent_id = debug_logger.add_log(
-                title="User sends message",
+            # Create a queue for streaming debug updates in real-time
+            debug_queue = asyncio.Queue()
+            
+            # Set up streaming callback to immediately send debug updates
+            def stream_debug_update(log_entry):
+                try:
+                    debug_queue.put_nowait(log_entry)
+                except asyncio.QueueFull:
+                    pass  # Skip if queue is full
+            
+            debug_logger.set_status_callback(stream_debug_update)
+            
+            # Log initial user message
+            debug_logger.add_log(
+                title="Processing User Message",
                 content_type="clickable",
-                data={"user_message": request.user_message}
+                data={"user_message": request.user_message},
+                function_name="chat_endpoint"
             )
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
 
             # Initialize OpenAI client
             client = OpenAI(api_key=request.api_key)
 
-            # Log 2: Prepare API Request
-            api_payload = {
-                "model": request.model,
-                "messages": [
-                    {"role": "system", "content": request.developer_message},
-                    {"role": "user", "content": request.user_message}
-                ],
-                "stream": True
-            }
-            debug_logger.add_log(
-                title="Preparing API Request",
-                content_type="clickable",
-                data=api_payload,
-                parent_id=parent_id
-            )
-            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+            # Helper function to drain debug queue
+            async def drain_debug_queue():
+                while not debug_queue.empty():
+                    try:
+                        log_entry = debug_queue.get_nowait()
+                        yield sse_format({"type": "debug", "data": log_entry})
+                    except asyncio.QueueEmpty:
+                        break
 
-            # Log 3: Send to API
-            debug_logger.add_log(title="Sending to OpenAI API...", status="pending", parent_id=parent_id)
-            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+            # Test yellow status with 3-second delay
+            test_task = asyncio.create_task(test_yellow_status())
+            
+            # Stream debug updates as they come in during the test
+            while not test_task.done():
+                async for debug_msg in drain_debug_queue():
+                    yield debug_msg
+                await asyncio.sleep(0.01)  # Small delay to prevent busy waiting
+            
+            # Wait for test to complete and get any remaining debug updates
+            await test_task
+            async for debug_msg in drain_debug_queue():
+                yield debug_msg
 
-            # Create the stream
-            stream = client.chat.completions.create(**api_payload)
+            # Use decorated functions - they will automatically update debug logs
+            api_task = asyncio.create_task(prepare_api_request(
+                request.developer_message, 
+                request.user_message, 
+                request.model
+            ))
             
-            # Log 4: Receiving from API
-            debug_logger.logs[-1]["status"] = "success"
-            debug_logger.logs[-1]["title"] = "Sent to OpenAI API"
-            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+            # Stream debug updates as they come in during API preparation
+            while not api_task.done():
+                async for debug_msg in drain_debug_queue():
+                    yield debug_msg
+                await asyncio.sleep(0.01)
             
+            api_payload = await api_task
+            async for debug_msg in drain_debug_queue():
+                yield debug_msg
+
+            # Call OpenAI API
+            call_task = asyncio.create_task(call_openai_api(client, api_payload))
+            
+            # Stream debug updates as they come in during API call
+            while not call_task.done():
+                async for debug_msg in drain_debug_queue():
+                    yield debug_msg
+                await asyncio.sleep(0.01)
+            
+            stream = await call_task
+            async for debug_msg in drain_debug_queue():
+                yield debug_msg
+            
+            # Stream the actual chat response
             full_response = ""
             for chunk in stream:
                 if chunk.choices[0].delta.content is not None:
@@ -117,18 +213,36 @@ async def chat(request: ChatRequest):
                     # Stream chat content
                     yield sse_format({"type": "chat", "data": content})
             
-            # Log 5: Message parsed
+            # Log the final response processing
             debug_logger.add_log(
-                title="Final message parsed",
+                title="Response Processing Complete",
                 content_type="clickable",
-                data={"full_response": full_response},
-                parent_id=parent_id
+                data={
+                    "full_response": full_response,
+                    "response_length": len(full_response)
+                },
+                function_name="chat_endpoint"
             )
-            yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
+            
+            # Stream final debug updates
+            async for debug_msg in drain_debug_queue():
+                yield debug_msg
 
         except Exception as e:
-            error_message = f"An unexpected error occurred: {e}"
-            debug_logger.add_log(title="Error", status="error", data=error_message)
+            import traceback
+            error_data = {
+                "error_message": str(e),
+                "error_type": type(e).__name__,
+                "full_traceback": traceback.format_exc(),
+                "context": "Main chat endpoint processing"
+            }
+            debug_logger.add_log(
+                title="Error in Chat Processing", 
+                status="error", 
+                content_type="clickable",  # Make main errors clickable too
+                data=error_data,
+                function_name="chat_endpoint"
+            )
             yield sse_format({"type": "debug", "data": debug_logger.get_logs()[-1]})
             # Also send an error for the chat
             yield sse_format({"type": "error", "data": str(e)})
@@ -145,3 +259,9 @@ if __name__ == "__main__":
     import uvicorn
     # Start the server on all network interfaces (0.0.0.0) on port 8000
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# Serve the frontend
+# This must be after all API routes
+# It serves files from the 'frontend' directory, which is one level up
+static_files_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'frontend'))
+app.mount("/", StaticFiles(directory=static_files_dir, html=True), name="static")

@@ -108,46 +108,109 @@ This guide provides a solid foundation for implementing and extending the debug 
 
 ---
 
-## 5. Implementation Notes & Troubleshooting
+## 5. Current Implementation Details
 
-This section contains specific implementation details and solutions to common issues encountered during development.
+### 5.1. Decorator-Based Function Tracking
 
-### 5.1. Backend: Data Streaming with SSE
+The current implementation uses a **decorator pattern** to automatically track LLM-related functions in the debug panel. This approach eliminates the need for manual logging calls within each function.
 
--   **Server-Sent Events (SSE):** The backend uses SSE to stream data to the frontend. This is handled by returning a `StreamingResponse` with the `text/event-stream` media type.
--   **Structured Payload:** Every message sent to the client is a JSON object with a specific structure: `{"type": "...", "data": ...}`.
-    -   `type`: Can be `chat`, `debug`, or `error`.
-    -   `data`: The payload, which is a string for `chat` or a log object for `debug`.
--   **SSE Formatting:** A helper function `sse_format` in `api/app.py` wraps the JSON string in the required `data: ...\n\n` format.
+#### **Core Decorator: `@debug_track`**
 
-### 5.2. Frontend: Rendering Logic
+All functions that are part of the LLM processing pipeline should be decorated with `@debug_track()`:
 
--   **Parsing the Stream:** The `streamChat` function in `script.js` reads the streaming response. It splits the incoming chunks by `\n\n` and parses each `data:` line as JSON.
--   **Rendering Debug Logs:** The `renderDebugLog` function is responsible for displaying the logs.
-    -   It creates or **updates** a log entry based on its unique `id`. This is crucial for updating the status of a step (e.g., from `pending` to `success`).
-    -   It uses `data-level` and `data-status` attributes to apply CSS for indentation and color-coding.
--   **Clickable Content & Modals:**
-    -   If a log's `content.type` is `clickable`, a "View" button is rendered.
-    -   An event listener is attached to this button, which calls `showContentModal`.
--   **JSON Formatting in Modal:**
-    -   The `showContentModal` function does **not** simply dump the JSON into a `<pre>` tag.
-    -   It parses the JSON and builds a custom HTML structure with `divs` and `spans` to achieve a **hanging indent** for long values. This is key for readability.
-    -   **Word Wrapping:** CSS `overflow-wrap: break-word;` is used on the value `span` to ensure long strings (like prompts) wrap at word boundaries instead of being split mid-word.
+```python
+@debug_track("Preparing OpenAI API Request")
+async def prepare_api_request(developer_message: str, user_message: str, model: str):
+    """Prepare the API request payload for OpenAI"""
+    # Function implementation...
+    return api_payload
+```
 
-### 5.3. Common Troubleshooting Scenarios
+**Key Features:**
+- **Automatic Status Tracking:** Functions automatically start with `pending` (yellow) status, then update to `success` (green) or `error` (red)
+- **Input/Output Capture:** Decorator automatically captures function arguments and return values (filtered for JSON serialization)
+- **Real-time Streaming:** Status updates are streamed to frontend immediately via callback system
+- **Error Handling:** Exceptions are caught and displayed with full traceback information
 
-#### **Issue: The Debug Panel is blank and no logs appear.**
+#### **Decorator Parameters:**
+- `title`: Custom display name (auto-generated from function name if omitted)
+- `content_type`: Either `"clickable"` (default) or `"inline"`
+- `track_args`: Whether to capture function arguments (default: `True`)
+- `track_result`: Whether to capture function return value (default: `True`)
 
-1.  **Is the backend server running?** The most common issue is that the `api/app.py` server is not running or has crashed.
-2.  **Was the backend server restarted after changes?**
-    -   **Problem:** If you add a new import or function to the backend, the server must be restarted.
-    -   **Symptom:** You will see an `ImportError: attempted relative import with no known parent package` in the terminal if you run `python api/app.py` after adding a relative import like `from .debug_logger...`.
-    -   **Solution:** Change the import to be direct (e.g., `from debug_logger...`) and **restart the server**.
-3.  **Is the frontend pointing to the correct API URL?**
-    -   **Problem:** The `fetch` call in `streamChat` might be using a relative path (`/api/chat`) instead of the full backend URL.
-    -   **Symptom:** A silent failure. The request goes to the frontend server (e.g., port 3000) which can't handle the API call, resulting in a 404 error that might not be immediately obvious in the console.
-    -   **Solution:** Ensure the `fetch` URL is `\${this.apiBaseUrl}/api/chat`, where `apiBaseUrl` is correctly set to `http://localhost:8000`.
-4.  **Is there a JavaScript rendering error?**
-    -   **Problem:** A subtle bug in the `renderDebugLog` function might prevent DOM elements from being created or appended correctly.
-    -   **Symptom:** The network tab shows data being received, but nothing appears in the panel. No console errors are thrown.
-    -   **Solution:** Verify that the logic for creating **and** replacing/appending elements in `renderDebugLog` is correct. Ensure a new `div` is always created and then either appended or used to replace an existing one.
+### 5.2. Real-Time Streaming Architecture
+
+The implementation uses a **queue-based streaming system** to ensure debug updates appear in real-time:
+
+```python
+# Set up real-time debug streaming
+debug_queue = asyncio.Queue()
+
+def stream_debug_update(log_entry):
+    debug_queue.put_nowait(log_entry)
+
+debug_logger.set_status_callback(stream_debug_update)
+
+# Execute functions as tasks and stream updates during execution
+task = asyncio.create_task(decorated_function())
+while not task.done():
+    async for debug_msg in drain_debug_queue():
+        yield sse_format({"type": "debug", "data": debug_msg})
+    await asyncio.sleep(0.01)
+```
+
+**Key Benefits:**
+- **Immediate Status Updates:** Pending status appears instantly when function starts
+- **Progress Visibility:** Users can see which process is currently running (yellow status)
+- **Stuck Process Detection:** Long-running processes remain yellow, making bottlenecks obvious
+
+### 5.3. Frontend Debug Viewer System
+
+The frontend includes an **in-place debug viewer** that replaces the chat window when viewing debug entries:
+
+#### **Navigation Features:**
+- **Keyboard Navigation:** Arrow keys (↑↓) to navigate between debug entries
+- **Highlighting:** Currently viewed entry is highlighted in debug panel
+- **Background Blur:** Everything except chat window and debug panel is blurred during viewing
+- **ESC to Exit:** Returns to normal chat interface
+
+#### **Visual Status Indicators:**
+- **Green Border:** Completed successfully
+- **Yellow Border:** Currently in progress (pending)
+- **Red Border:** Error occurred
+
+### 5.4. Backend Implementation Guide
+
+#### **Required Decorators for LLM Functions:**
+
+1. **API Preparation:** `@debug_track("Preparing OpenAI API Request")`
+2. **API Calls:** `@debug_track("Calling OpenAI API", track_result=False)`
+3. **Response Processing:** `@debug_track("Processing Response Stream")`
+4. **Custom Operations:** `@debug_track("Custom Operation Name")`
+
+#### **Import Requirements:**
+```python
+# In api/app.py
+try:
+    from .debug_logger import debug_logger, debug_track
+except ImportError:
+    from debug_logger import debug_logger, debug_track
+```
+
+### 5.5. Common Troubleshooting Scenarios
+
+#### **Issue: Yellow status never appears**
+- **Cause:** Debug updates not being streamed in real-time
+- **Solution:** Ensure functions are run as `asyncio.create_task()` with proper queue draining
+
+#### **Issue: Functions not appearing in debug panel**
+- **Cause:** Missing `@debug_track` decorator
+- **Solution:** Add decorator to all LLM pipeline functions
+
+#### **Issue: JSON serialization errors**
+- **Cause:** Non-serializable objects (like OpenAI client) in function arguments
+- **Solution:** Decorator automatically filters these out and shows `<ObjectType object>`
+
+#### **Issue: Debug viewer not working**
+- **Cause:** CSS positioning or JavaScript event handling issues
+- **Solution:** Verify debug viewer uses absolute positioning and proper event listeners

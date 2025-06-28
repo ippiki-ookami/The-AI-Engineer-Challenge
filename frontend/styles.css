@@ -182,6 +182,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-lg);
+    position: relative; /* Enable absolute positioning for debug viewer */
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -778,7 +779,8 @@ body {
     padding: 0.5rem;
     border-radius: var(--radius-md);
     margin-bottom: 0.5rem;
-    transition: background-color var(--transition-fast);
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
     border-left: 3px solid transparent;
 }
 
@@ -843,4 +845,236 @@ body {
 #contentModal .modal-content {
     max-width: 50vw;
     width: 90%;
-} 
+}
+
+/* Function Info Styling */
+.function-info {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.function-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.9rem;
+}
+
+.function-header code {
+    background: var(--bg-primary);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-family: 'Monaco', 'Courier New', monospace;
+    color: var(--primary-color);
+}
+
+.function-status {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.function-status.status-success {
+    color: var(--secondary-color);
+}
+
+.function-status.status-error {
+    color: var(--danger-color);
+}
+
+.function-status.status-pending {
+    color: var(--accent-color);
+}
+
+.modal-separator {
+    border: none;
+    height: 1px;
+    background: var(--border-color);
+    margin: var(--spacing-md) 0;
+}
+
+/* Error Content Styling */
+.error-summary {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.error-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--danger-color);
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+}
+
+.error-message, .error-type {
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.9rem;
+}
+
+.error-type code {
+    background: rgba(239, 68, 68, 0.1);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    color: var(--danger-color);
+    font-weight: 600;
+}
+
+.error-input-section h4, .traceback-section h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.traceback-section {
+    margin-top: var(--spacing-md);
+}
+
+.traceback-content {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    font-family: 'Monaco', 'Courier New', monospace;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    color: var(--text-secondary);
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+/* Debug Viewer System */
+body.debug-viewer-active {
+    overflow: hidden;
+}
+
+/* Blur everything except main content area when debug viewer is active */
+body.debug-viewer-active .header,
+body.debug-viewer-active .input-container {
+    filter: blur(3px);
+    pointer-events: none;
+}
+
+/* Keep main content (chat and debug panel) unblurred */
+body.debug-viewer-active .main-content {
+    filter: none;
+    pointer-events: auto;
+}
+
+/* Disable message input when debug viewer is active */
+body.debug-viewer-active #messageInput {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+body.debug-viewer-active #sendButton {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.debug-entry-highlighted {
+    background: rgba(0, 0, 0, 0.1) !important;
+    border-top-color: rgba(0, 0, 0, 0.3) !important;
+    border-right-color: rgba(0, 0, 0, 0.3) !important;
+    border-bottom-color: rgba(0, 0, 0, 0.3) !important;
+    /* Preserve the left border color based on status */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    /* Removed transform: scale(1.02) to prevent overflow of left border */
+}
+
+.debug-entry-display {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-inner, inset 0 2px 4px 0 rgba(0,0,0,0.05));
+    overflow: hidden;
+    z-index: 10;
+}
+
+.debug-entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, #0099cc 0%, #2d99aa 100%);
+    color: white;
+    border-bottom: 1px solid var(--border-color);
+    position: relative;
+}
+
+.debug-entry-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.debug-entry-close {
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    cursor: pointer;
+    color: white;
+    font-size: 1.2rem;
+    transition: all 0.2s ease;
+    padding: 0.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.debug-entry-close:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.debug-entry-content {
+    flex: 1;
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    background: var(--bg-primary);
+}
+
+/* Navigation hints */
+body.debug-viewer-active::after {
+    content: "Use ↑↓ arrows to navigate, ESC to exit";
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8rem;
+    z-index: 1000;
+    pointer-events: none;
+}
