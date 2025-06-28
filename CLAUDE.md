@@ -76,7 +76,8 @@ except ImportError:
     title="Custom Display Name",    # Optional: Auto-generated from function name if omitted
     content_type="clickable",       # Optional: "clickable" (default) or "inline"
     track_args=True,                # Optional: Capture function arguments (default: True)
-    track_result=True               # Optional: Capture return value (default: True)
+    track_result=True,              # Optional: Capture return value (default: True)
+    optional=False                  # Optional: Allow pipeline to continue if function fails (default: False)
 )
 ```
 
@@ -84,6 +85,59 @@ except ImportError:
 - Use `track_result=False` for functions that return large streams or non-serializable objects
 - Use custom `title` for better user understanding (e.g., "Calling OpenAI API" instead of "Call Openai Api")
 - Use `content_type="inline"` for simple string results that don't need a modal
+- Use `optional=True` for data sources that may fail without stopping the pipeline
+
+### Critical vs Optional Functions
+
+#### **Critical Functions (default behavior):**
+Use for functions that MUST succeed for the pipeline to work:
+```python
+@debug_track("Essential API Call")
+async def call_openai_api():
+    # If this fails, stop everything
+    return await openai.chat.completions.create(...)
+
+@debug_track("Core Data Processing") 
+async def process_main_data():
+    # If this fails, stop everything
+    return processed_data
+```
+
+#### **Optional Functions:**
+Use for functions that enhance the pipeline but aren't essential:
+```python
+@debug_track("Supplementary Data Source", optional=True)
+async def fetch_enhancement_data():
+    # If this fails, continue without this data
+    return await external_api_call()
+
+@debug_track("Cache Lookup", optional=True)
+async def check_cache():
+    # If cache is down, continue without cached data
+    return await redis.get(key)
+
+@debug_track("Optional Validation", optional=True)
+async def validate_external_source():
+    # If validation fails, continue anyway
+    return await validation_service()
+```
+
+#### **Handling Optional Function Results:**
+```python
+# Optional functions return None when they fail
+cache_result = await check_cache()  # Could be None
+enhancement_data = await fetch_enhancement_data()  # Could be None
+
+# Always check for None before using results
+available_data = []
+if cache_result is not None:
+    available_data.append(cache_result)
+if enhancement_data is not None:
+    available_data.append(enhancement_data)
+
+# Continue with whatever data you have
+final_result = await process_with_available_data(available_data)
+```
 
 ### Real-Time Streaming Integration
 

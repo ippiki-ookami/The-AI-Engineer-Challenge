@@ -137,6 +137,7 @@ async def prepare_api_request(developer_message: str, user_message: str, model: 
 - `content_type`: Either `"clickable"` (default) or `"inline"`
 - `track_args`: Whether to capture function arguments (default: `True`)
 - `track_result`: Whether to capture function return value (default: `True`)
+- `optional`: Whether function failures should stop the pipeline (default: `False`)
 
 ### 5.2. Real-Time Streaming Architecture
 
@@ -187,6 +188,58 @@ The frontend includes an **in-place debug viewer** that replaces the chat window
 2. **API Calls:** `@debug_track("Calling OpenAI API", track_result=False)`
 3. **Response Processing:** `@debug_track("Processing Response Stream")`
 4. **Custom Operations:** `@debug_track("Custom Operation Name")`
+5. **Optional Data Sources:** `@debug_track("Fetching External Data", optional=True)`
+
+#### **Optional vs Critical Functions:**
+
+**Critical Functions (default):**
+- Pipeline stops if the function fails
+- Use for essential operations like API calls, core processing
+- Exception is re-raised, stopping execution
+
+```python
+@debug_track("Essential API Call")
+async def call_required_api():
+    # If this fails, entire pipeline stops
+    return await api_call()
+```
+
+**Optional Functions:**
+- Pipeline continues even if the function fails
+- Use for data gathering from multiple sources, enhancement features, fallback operations
+- Function returns `None` on failure, pipeline continues
+
+```python
+@debug_track("Optional Data Source", optional=True)
+async def fetch_supplementary_data():
+    # If this fails, pipeline continues with other data
+    return await external_service()
+
+# Usage in pipeline
+result = await fetch_supplementary_data()  # Could be None
+if result is not None:
+    # Use the data
+    process_data(result)
+# Pipeline continues regardless
+```
+
+**Real-world Example:**
+```python
+# Gather data from multiple sources - some may fail
+sources = []
+
+# Try 4 different data sources (2 fail, 2 succeed)
+source1 = await fetch_database_data()      # Critical - must succeed
+source2 = await fetch_api_data(optional=True)      # Optional - may fail  
+source3 = await fetch_cache_data(optional=True)    # Optional - may fail
+source4 = await fetch_backup_data(optional=True)   # Optional - may fail
+
+# Collect successful results
+available_data = [s for s in [source2, source3, source4] if s is not None]
+
+# Continue processing with whatever data we have
+response = await generate_response(source1, available_data)
+```
 
 #### **Import Requirements:**
 ```python
@@ -214,3 +267,11 @@ except ImportError:
 #### **Issue: Debug viewer not working**
 - **Cause:** CSS positioning or JavaScript event handling issues
 - **Solution:** Verify debug viewer uses absolute positioning and proper event listeners
+
+#### **Issue: Optional function failures stopping pipeline**
+- **Cause:** Function not marked as `optional=True` in decorator
+- **Solution:** Add `optional=True` parameter and handle `None` return values in pipeline
+
+#### **Issue: Pipeline continuing when critical function fails**
+- **Cause:** Function incorrectly marked as `optional=True`
+- **Solution:** Remove `optional=True` for functions that must succeed for pipeline to work

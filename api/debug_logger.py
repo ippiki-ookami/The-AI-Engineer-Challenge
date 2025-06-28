@@ -74,8 +74,16 @@ class DebugLogger:
                     self.status_callback(log)
                 break
 
-    def debug_track(self, title=None, content_type="clickable", track_args=True, track_result=True):
-        """Decorator to automatically track function execution in debug logs"""
+    def debug_track(self, title=None, content_type="clickable", track_args=True, track_result=True, optional=False):
+        """Decorator to automatically track function execution in debug logs
+        
+        Args:
+            title: Custom display name for the function
+            content_type: "clickable" or "inline" 
+            track_args: Whether to capture function arguments
+            track_result: Whether to capture return value
+            optional: If True, exceptions are caught and logged but not re-raised, allowing pipeline to continue
+        """
         def decorator(func):
             @wraps(func)
             async def async_wrapper(*args, **kwargs):
@@ -144,6 +152,7 @@ class DebugLogger:
                     error_data["error_type"] = type(e).__name__
                     error_data["full_traceback"] = traceback.format_exc()
                     error_data["function_name"] = func.__name__
+                    error_data["optional_failure"] = str(optional)
                     
                     # Update the log entry to be clickable
                     for log in self.logs:
@@ -153,7 +162,12 @@ class DebugLogger:
                             log["content"]["data"] = error_data
                             break
                     
-                    raise
+                    # Only re-raise if this is not an optional function
+                    if not optional:
+                        raise
+                    
+                    # For optional functions, return None and continue pipeline
+                    return None
                 finally:
                     self.level -= 1
             
@@ -224,6 +238,7 @@ class DebugLogger:
                     error_data["error_type"] = type(e).__name__
                     error_data["full_traceback"] = traceback.format_exc()
                     error_data["function_name"] = func.__name__
+                    error_data["optional_failure"] = str(optional)
                     
                     # Update the log entry to be clickable
                     for log in self.logs:
@@ -233,7 +248,12 @@ class DebugLogger:
                             log["content"]["data"] = error_data
                             break
                     
-                    raise
+                    # Only re-raise if this is not an optional function
+                    if not optional:
+                        raise
+                    
+                    # For optional functions, return None and continue pipeline
+                    return None
                 finally:
                     self.level -= 1
                     

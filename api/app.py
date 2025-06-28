@@ -79,6 +79,24 @@ async def test_yellow_status():
     await asyncio.sleep(3.0)
     return {"test": "Yellow status should be visible for 3 seconds"}
 
+@debug_track("Test Optional Data Source 1", optional=True)
+async def test_optional_data_source_1():
+    """Test function that always fails but is marked as optional"""
+    await asyncio.sleep(0.5)
+    raise Exception("Data source 1 is temporarily unavailable")
+
+@debug_track("Test Optional Data Source 2", optional=True) 
+async def test_optional_data_source_2():
+    """Test function that succeeds and is marked as optional"""
+    await asyncio.sleep(0.3)
+    return {"data": "Successfully retrieved data from source 2"}
+
+@debug_track("Test Critical Function")
+async def test_critical_function():
+    """Test function that would stop pipeline if it failed (not optional)"""
+    await asyncio.sleep(0.2)
+    return {"status": "Critical function completed successfully"}
+
 @debug_track("Processing Response Stream")
 async def process_response_stream(stream):
     """Process the streaming response from OpenAI"""
@@ -171,6 +189,45 @@ async def chat(request: ChatRequest):
             
             # Wait for test to complete and get any remaining debug updates
             await test_task
+            async for debug_msg in drain_debug_queue():
+                yield debug_msg
+
+            # Test optional failure scenario - simulating gathering data from multiple sources
+            data_sources = []
+            
+            # Try to gather data from multiple sources (some may fail)
+            source1_task = asyncio.create_task(test_optional_data_source_1())  # This will fail
+            source2_task = asyncio.create_task(test_optional_data_source_2())  # This will succeed
+            
+            # Stream updates for both data source attempts
+            tasks = [source1_task, source2_task]
+            while any(not task.done() for task in tasks):
+                async for debug_msg in drain_debug_queue():
+                    yield debug_msg
+                await asyncio.sleep(0.01)
+            
+            # Collect results (None for failed optional functions)
+            source1_result = await source1_task  # Will be None due to failure
+            source2_result = await source2_task  # Will contain data
+            
+            # Add successful data to our collection
+            if source1_result is not None:
+                data_sources.append(source1_result)
+            if source2_result is not None:
+                data_sources.append(source2_result)
+            
+            async for debug_msg in drain_debug_queue():
+                yield debug_msg
+            
+            # Continue with critical function (this would stop pipeline if it failed)
+            critical_task = asyncio.create_task(test_critical_function())
+            
+            while not critical_task.done():
+                async for debug_msg in drain_debug_queue():
+                    yield debug_msg
+                await asyncio.sleep(0.01)
+                
+            critical_result = await critical_task
             async for debug_msg in drain_debug_queue():
                 yield debug_msg
 
