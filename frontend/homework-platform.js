@@ -310,7 +310,8 @@ class HomeworkPlatform extends BaseChatInterface {
                 user_message: userMessage,
                 model: this.currentModel,
                 api_key: this.apiKey,
-                feature_id: this.currentFeature  // Routes to isolated homework handler
+                feature_id: this.currentFeature,  // Routes to isolated homework handler
+                message_chain: this.getMessageChain()
             })
         });
 
