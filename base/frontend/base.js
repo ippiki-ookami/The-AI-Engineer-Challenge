@@ -365,19 +365,24 @@ class BaseChatInterface {
     }
 
     async streamChat(userMessage) {
+        const messageChain = this.getMessageChain();
+        const requestPayload = {
+            developer_message: this.developerMessage,
+            user_message: userMessage,
+            model: this.currentModel,
+            api_key: this.apiKey,
+            feature_id: this.currentFeature,
+            message_chain: messageChain
+        };
+        
+        console.log('🚀 Sending request payload:', requestPayload);
+        
         const response = await fetch(`${this.apiBaseUrl}/api/chat`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                developer_message: this.developerMessage,
-                user_message: userMessage,
-                model: this.currentModel,
-                api_key: this.apiKey,
-                feature_id: this.currentFeature,
-                message_chain: this.getMessageChain()
-            })
+            body: JSON.stringify(requestPayload)
         });
 
         if (!response.ok) {
@@ -461,9 +466,12 @@ class BaseChatInterface {
         }
         
         if (log.content.type === 'clickable') {
-            entryDiv.querySelector('.clickable-content-btn').addEventListener('click', () => {
-                this.showDebugEntry(log);
-            });
+            const btn = entryDiv.querySelector('.clickable-content-btn');
+            if (btn) {
+                btn.addEventListener('click', () => {
+                    this.showDebugEntry(log);
+                });
+            }
         }
 
         this.debugContent.scrollTop = this.debugContent.scrollHeight;
