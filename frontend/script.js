@@ -11,6 +11,7 @@ class ChatInterface {
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
+        this.initializeTheme();
         this.updateUI();
     }
 
@@ -40,6 +41,7 @@ class ChatInterface {
         this.exportChatBtn = document.getElementById('exportChat');
         this.uploadFileBtn = document.getElementById('uploadFile');
         this.debugBtn = document.getElementById('debugBtn');
+        this.themeToggle = document.getElementById('themeToggle');
 
         // Main Content Area
         this.mainContent = document.getElementById('mainContent');
@@ -93,6 +95,9 @@ class ChatInterface {
         
         // Debug Panel
         this.debugBtn.addEventListener('click', () => this.toggleDebugPanel());
+        
+        // Theme Toggle
+        this.themeToggle.addEventListener('click', () => this.toggleTheme());
         
         // Content Modal
         this.closeContentModalBtn.addEventListener('click', () => this.closeContentModal());
@@ -864,6 +869,33 @@ class ChatInterface {
     toggleDebugPanel() {
         this.mainContent.classList.toggle('debug-open');
         this.debugBtn.classList.toggle('active');
+    }
+
+    initializeTheme() {
+        // Get saved theme preference or default to dark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
+        this.setTheme(savedTheme);
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.setTheme(newTheme);
+    }
+
+    setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+        
+        // Update button icon
+        const icon = this.themeToggle.querySelector('i');
+        if (theme === 'dark') {
+            icon.className = 'fas fa-sun';
+            this.themeToggle.title = 'Switch to Light Mode';
+        } else {
+            icon.className = 'fas fa-moon';
+            this.themeToggle.title = 'Switch to Dark Mode';
+        }
     }
 }
 
