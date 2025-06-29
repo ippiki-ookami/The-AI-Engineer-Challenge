@@ -1,0 +1,1 @@
+# Base frontend functionality for all features

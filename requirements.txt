@@ -1,0 +1,25 @@
+# LLM Bootcamp Requirements
+# Base dependencies for all features
+
+# Core API framework
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+
+# LLM Integration
+openai>=1.0.0
+
+# File handling
+python-multipart>=0.0.6
+
+# Data processing (for future features)
+numpy>=1.24.0
+pandas>=2.0.0
+
+# Vector operations (for RAG features)
+# sentence-transformers>=2.2.0  # Uncomment when implementing RAG
+# chromadb>=0.4.0              # Uncomment when implementing RAG
+
+# Development dependencies
+# pytest>=7.0.0                # Uncomment for testing
+# black>=22.0.0                # Uncomment for code formatting
+# ruff>=0.0.280               # Uncomment for linting

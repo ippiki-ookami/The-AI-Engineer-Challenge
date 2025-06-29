@@ -6,13 +6,65 @@
 
 ## <h1 align="center" id="heading"> 👋 Welcome to the AI Engineer Challenge</h1>
 
-## 🤖 Your First Vibe Coding LLM Application
+## 🎓 LLM Bootcamp - Modular Learning Platform
+
+> **New!** This repository has evolved into a comprehensive **modular learning platform** with multiple homework assignments. Each feature builds upon previous knowledge while maintaining complete isolation for focused learning.
 
 > If you are a novice, and need a bit more help to get your dev environment off the ground, check out this [Setup Guide](docs/GIT_SETUP.md). This guide will walk you through the 'git' setup you need to get started.
 
 > For additional context on LLM development environments and API key setup, you can also check out our [Interactive Dev Environment for LLM Development](https://github.com/AI-Maker-Space/Interactive-Dev-Environment-for-AI-Engineers).
 
-In this repository, we'll walk you through the steps to create a LLM (Large Language Model) powered application with a vibe-coded frontend!
+## 🚀 Quick Start - Choose Your Learning Path
+
+### **Option 1: Unified Platform (Recommended for Sharing)**
+**All homework in one app with seamless dropdown switching:**
+
+```bash
+# Install dependencies
+pip install fastapi uvicorn openai python-multipart
+
+# Run unified platform with all homework
+python scripts/run_feature.py --unified
+
+# Open http://localhost:8000 and switch homework via dropdown!
+```
+
+### **Option 2: Individual Homework (Best for Development)**
+**Focus on one homework at a time:**
+
+```bash
+# Run specific homework in isolation
+python scripts/run_feature.py --feature 01-vibe-check
+
+# Each homework runs independently
+```
+
+## 🏗️ Modular Architecture
+
+```
+features/
+├── 01-vibe-check/            ✅ Basic chat with debug panel
+├── 02-embeddings-rag/        🚧 RAG with document upload  
+├── 03-agents/                🚧 Multi-agent systems
+├── 04-fine-tuning/           🚧 Model fine-tuning
+└── 05-multimodal/            🚧 Image + text processing
+```
+
+Each feature is completely self-contained with its own frontend, backend, and documentation!
+
+## 🎯 Learning Path
+
+### **Option A: Quick Learning (Recommended)**
+Use the modular platform to learn through structured homework assignments:
+
+1. **01 - Vibe Check**: Master the basics with debug panel
+2. **02 - Embeddings and RAG**: Document upload and retrieval 
+3. **03 - AI Agents**: Tool usage and multi-step reasoning
+4. **04 - Fine Tuning**: Custom model training
+5. **05 - Multimodal**: Vision + language understanding
+
+### **Option B: Original Challenge** 
+Follow the original vibe-coding tutorial below to build from scratch.
 
 Are you ready? Let's get started!
 
@@ -184,3 +236,112 @@ Who else is diving into the world of AI? Let's connect! 🌐💡
 
 #FirstLLMApp 
 ```
+
+---
+
+## 🎓 Advanced Learning: Modular Homework Platform
+
+### Ready for More? Explore Structured Learning!
+
+After completing the original challenge, dive deeper with our modular homework platform:
+
+#### 🔧 Available Features
+
+| Feature | Status | Description | Port |
+|---------|--------|-------------|------|
+| **01 - Vibe Check** | ✅ Ready | Basic chat with debug panel | 8000 |
+| **02 - Embeddings and RAG** | 🚧 Coming Soon | Document upload and retrieval | 8001 |
+| **03 - AI Agents** | 🚧 Coming Soon | Multi-agent systems | 8002 |
+| **04 - Fine Tuning** | 🚧 Coming Soon | Custom model training | 8003 |
+| **05 - Multimodal** | 🚧 Coming Soon | Vision + language | 8004 |
+
+#### 🚀 Running Features
+
+```bash
+# List all available homework
+python scripts/run_feature.py --list
+
+# UNIFIED: All homework in one app (recommended for sharing)
+python scripts/run_feature.py --unified
+
+# INDIVIDUAL: Run specific homework (recommended for development)
+python scripts/run_feature.py --feature 01-vibe-check
+
+# Custom port
+python scripts/run_feature.py --unified --port 8080
+```
+
+#### 🎯 What You'll Learn
+
+**01 - Vibe Check (Start Here!)**
+- LLM API fundamentals
+- Real-time streaming responses  
+- Debug panel for observability
+- System prompt engineering
+- Frontend/backend integration
+
+**02 - Embeddings and RAG**
+- Document processing pipelines
+- Vector embeddings and search
+- Retrieval-augmented generation
+- Context injection strategies
+
+**03 - AI Agents**
+- Function calling and tool usage
+- Multi-step reasoning
+- Agent orchestration
+- Error handling and recovery
+
+**04 - Fine Tuning**
+- Dataset preparation
+- Model training workflows
+- Evaluation and comparison
+- Deployment optimization
+
+**05 - Multimodal**
+- Vision-language models
+- Image understanding
+- Cross-modal reasoning
+- Multimodal prompt design
+
+#### 🎨 Educational Features
+
+Every homework includes:
+- 🔍 **Debug Panel**: See exactly how LLM processing works
+- 🎨 **Modern UI**: Dark/light themes, responsive design
+- ⚡ **Real-time Streaming**: Watch responses generate live
+- 📁 **Export**: Save conversations for review
+- ⌨️ **Shortcuts**: Efficient keyboard navigation
+- 📚 **Documentation**: Comprehensive learning guides
+
+#### 💡 Getting Started with Features
+
+1. **Pick your starting point**:
+   ```bash
+   python scripts/run_feature.py --feature 01-vibe-check
+   ```
+
+2. **Enter your OpenAI API key** when prompted
+
+3. **Explore the debug panel** - it's educational magic! ✨
+
+4. **Try the special commands**:
+   - Type "vibe check" in 01-vibe-check for fun responses
+   - Use `Ctrl+K` to focus input, `Ctrl+L` to clear chat
+   - Navigate debug entries with arrow keys
+
+5. **Progress through features** as they become available
+
+Each feature builds upon the previous, creating a comprehensive learning journey from basic chat to advanced AI systems!
+
+### 🤝 Contributing New Features
+
+Want to add a homework assignment? 
+
+1. Copy the `features/01-vibe-check/` structure
+2. Implement your `FeatureHandler` extending `BaseChatHandler`
+3. Create feature-specific UI extending `BaseChatInterface`
+4. Add to `scripts/run_feature.py`
+5. Document learning objectives
+
+Perfect for educators creating AI curriculum! 👨‍🏫👩‍🏫

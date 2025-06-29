@@ -1,13 +1,14 @@
 {
     "version": 2,
+    "functions": {
+        "api/homework_app.py": {
+            "runtime": "python3.9"
+        }
+    },
     "rewrites": [
-      {
-        "source": "/api/:path*",
-        "destination": "/api/app.py"
-      },
-      {
-        "source": "/:path*",
-        "destination": "/frontend/:path*"
-      }
+        { "source": "/api/(.*)", "destination": "/api/homework_app.py" },
+        { "source": "/features/(.*)", "destination": "/features/$1" },
+        { "source": "/base/(.*)", "destination": "/base/$1" },
+        { "source": "/(.*)", "destination": "/frontend/$1" }
     ]
 } 

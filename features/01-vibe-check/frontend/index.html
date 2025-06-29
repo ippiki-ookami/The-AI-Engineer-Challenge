@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Bootcamp Chat Interface</title>
-    <!-- Base Styles -->
-    <link rel="stylesheet" href="/base/frontend/base.css">
+    <title>Vibe Check - LLM Bootcamp</title>
     
-    <!-- Original styles for compatibility -->
-    <link rel="stylesheet" href="/frontend/styles.css">
+    <!-- Base Styles -->
+    <link rel="stylesheet" href="../../../base/frontend/base.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Feature-specific styles -->
+    <link rel="stylesheet" href="./vibe-check.css">
 </head>
 <body>
     <div class="app-container">
@@ -21,6 +22,7 @@
                     <i class="fas fa-brain"></i>
                     <span>LLM Bootcamp</span>
                 </div>
+                
                 <div class="feature-selector">
                     <select id="featureSelect" class="feature-dropdown">
                         <option value="01-vibe-check">01 - Vibe Check</option>
@@ -30,6 +32,7 @@
                         <option value="05-multimodal" disabled>05 - Multimodal LLMs</option>
                     </select>
                 </div>
+                
                 <div class="header-controls">
                     <div class="model-selector">
                         <select id="modelSelect">
@@ -54,7 +57,7 @@
 
         <!-- Main Content Area -->
         <main class="main-content" id="mainContent">
-            <!-- Main Chat Area -->
+            <!-- Chat Container -->
             <div class="chat-container" id="chatContainer">
                 <div class="chat-messages" id="chatMessages">
                     <!-- Welcome message -->
@@ -65,9 +68,9 @@
                                 <span>AI Assistant</span>
                             </div>
                             <div class="message-text">
-                                Welcome to the LLM Bootcamp! I'm here to help you learn about RAG, prompt engineering, and other LLM techniques. 
+                                Welcome to the LLM Bootcamp Vibe Check! This is your basic chat interface with debug panel to understand how LLM processing works. 
                                 <br><br>
-                                To get started, please enter your OpenAI API key.
+                                Enter your OpenAI API key to get started, then ask me anything about LLMs, prompt engineering, or general topics.
                             </div>
                         </div>
                     </div>
@@ -80,8 +83,7 @@
                     <h3><i class="fas fa-bug"></i> Debug Panel</h3>
                 </div>
                 <div class="debug-content">
-                    <!-- Debug info will go here -->
-                    <p>Debug panel is ready.</p>
+                    <p>Debug panel is ready. Send a message to see the LLM processing pipeline in action!</p>
                 </div>
             </aside>
         </main>
@@ -99,8 +101,10 @@
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+                
                 <div class="input-features">
-                    <button id="uploadFile" class="feature-btn" title="Upload file for RAG">
+                    <!-- File upload is hidden for vibe check -->
+                    <button id="uploadFile" class="feature-btn" title="Upload file for RAG" style="display: none;">
                         <i class="fas fa-file-upload"></i>
                     </button>
                     <button id="exportChat" class="feature-btn" title="Export conversation">
@@ -113,6 +117,7 @@
             </div>
         </div>
 
+        <!-- Base Modals -->
         <!-- Loading Overlay -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="loading-content">
@@ -187,9 +192,9 @@
     </div>
 
     <!-- Base JavaScript -->
-    <script src="/base/frontend/base.js"></script>
+    <script src="../../../base/frontend/base.js"></script>
     
-    <!-- Unified Homework Platform -->
-    <script src="/frontend/homework-platform.js"></script>
+    <!-- Feature-specific scripts -->
+    <script src="./vibe-check.js"></script>
 </body>
-</html> 
+</html>

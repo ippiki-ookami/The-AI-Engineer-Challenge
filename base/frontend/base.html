@@ -3,24 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Bootcamp Chat Interface</title>
+    <title>{% block title %}LLM Bootcamp{% endblock %}</title>
+    
     <!-- Base Styles -->
     <link rel="stylesheet" href="/base/frontend/base.css">
-    
-    <!-- Original styles for compatibility -->
-    <link rel="stylesheet" href="/frontend/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Feature-specific styles -->
+    {% block styles %}{% endblock %}
 </head>
 <body>
     <div class="app-container">
         <!-- Header -->
+        {% block header %}
         <header class="header">
             <div class="header-content">
                 <div class="logo">
                     <i class="fas fa-brain"></i>
                     <span>LLM Bootcamp</span>
                 </div>
+                
+                {% block feature_selector %}
                 <div class="feature-selector">
                     <select id="featureSelect" class="feature-dropdown">
                         <option value="01-vibe-check">01 - Vibe Check</option>
@@ -30,6 +34,9 @@
                         <option value="05-multimodal" disabled>05 - Multimodal LLMs</option>
                     </select>
                 </div>
+                {% endblock %}
+                
+                {% block header_controls %}
                 <div class="header-controls">
                     <div class="model-selector">
                         <select id="modelSelect">
@@ -48,16 +55,24 @@
                     <button id="themeToggle" class="feature-btn" title="Toggle Dark/Light Mode">
                         <i class="fas fa-moon"></i>
                     </button>
+                    
+                    <!-- Feature-specific header controls -->
+                    {% block extra_header_controls %}{% endblock %}
                 </div>
+                {% endblock %}
             </div>
         </header>
+        {% endblock %}
 
         <!-- Main Content Area -->
+        {% block main_content %}
         <main class="main-content" id="mainContent">
-            <!-- Main Chat Area -->
+            <!-- Chat Container -->
+            {% block chat_area %}
             <div class="chat-container" id="chatContainer">
                 <div class="chat-messages" id="chatMessages">
                     <!-- Welcome message -->
+                    {% block welcome_message %}
                     <div class="message system-message">
                         <div class="message-content">
                             <div class="message-header">
@@ -71,22 +86,30 @@
                             </div>
                         </div>
                     </div>
+                    {% endblock %}
                 </div>
             </div>
+            {% endblock %}
 
             <!-- Debug Panel -->
+            {% block debug_panel %}
             <aside class="debug-panel" id="debugPanel">
                 <div class="debug-header">
                     <h3><i class="fas fa-bug"></i> Debug Panel</h3>
                 </div>
                 <div class="debug-content">
-                    <!-- Debug info will go here -->
                     <p>Debug panel is ready.</p>
                 </div>
             </aside>
+            {% endblock %}
+            
+            <!-- Feature-specific sidebars/panels -->
+            {% block feature_panels %}{% endblock %}
         </main>
+        {% endblock %}
 
         <!-- Input Area -->
+        {% block input_area %}
         <div class="input-container">
             <div class="input-wrapper">
                 <div class="message-input-container">
@@ -99,8 +122,10 @@
                         <i class="fas fa-paper-plane"></i>
                     </button>
                 </div>
+                
+                {% block input_features %}
                 <div class="input-features">
-                    <button id="uploadFile" class="feature-btn" title="Upload file for RAG">
+                    <button id="uploadFile" class="feature-btn" title="Upload file for RAG" style="display: none;">
                         <i class="fas fa-file-upload"></i>
                     </button>
                     <button id="exportChat" class="feature-btn" title="Export conversation">
@@ -109,10 +134,17 @@
                     <button id="settings" class="feature-btn" title="Settings">
                         <i class="fas fa-cog"></i>
                     </button>
+                    
+                    <!-- Feature-specific input controls -->
+                    {% block extra_input_features %}{% endblock %}
                 </div>
+                {% endblock %}
             </div>
         </div>
+        {% endblock %}
 
+        <!-- Base Modals -->
+        {% block modals %}
         <!-- Loading Overlay -->
         <div class="loading-overlay" id="loadingOverlay">
             <div class="loading-content">
@@ -143,6 +175,9 @@
                         <label>Developer Message (System Prompt):</label>
                         <textarea id="developerMessage" rows="4" placeholder="Enter a system prompt to guide the AI's behavior..."></textarea>
                     </div>
+                    
+                    <!-- Feature-specific settings -->
+                    {% block extra_settings %}{% endblock %}
                 </div>
             </div>
         </div>
@@ -184,12 +219,16 @@
                 </div>
             </div>
         </div>
+        
+        <!-- Feature-specific modals -->
+        {% block extra_modals %}{% endblock %}
+        {% endblock %}
     </div>
 
     <!-- Base JavaScript -->
     <script src="/base/frontend/base.js"></script>
     
-    <!-- Unified Homework Platform -->
-    <script src="/frontend/homework-platform.js"></script>
+    <!-- Feature-specific scripts -->
+    {% block scripts %}{% endblock %}
 </body>
-</html> 
+</html>

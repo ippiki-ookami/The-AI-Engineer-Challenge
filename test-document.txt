@@ -1,0 +1,25 @@
+LLM Bootcamp - Test Document
+
+This is a sample document for testing the RAG (Retrieval-Augmented Generation) functionality in homework 02.
+
+Key Concepts:
+- Embeddings: Vector representations of text that capture semantic meaning
+- RAG: Combines retrieval of relevant documents with language model generation
+- Vector Databases: Store and search embeddings efficiently
+- Semantic Search: Find documents based on meaning rather than exact keywords
+
+Example Use Cases:
+1. Document Q&A: Ask questions about uploaded documents
+2. Knowledge Base Search: Find relevant information from a collection of texts
+3. Content Summarization: Extract key insights from large documents
+4. Citation Generation: Provide sources for generated answers
+
+This document contains information about machine learning, natural language processing, and document retrieval systems. It can be used to test the upload functionality and search capabilities of the RAG system.
+
+The system should be able to:
+- Upload and process this text file
+- Extract and display content in the debug panel
+- Search for keywords like "embeddings", "RAG", or "vector"
+- Return relevant excerpts when queried
+
+Test Keywords: artificial intelligence, semantic search, document processing, machine learning

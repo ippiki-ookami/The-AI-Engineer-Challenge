@@ -1,0 +1,85 @@
+/* Vibe Check Feature Specific Styles */
+
+/* Override welcome message for vibe check feature */
+.vibe-check-welcome {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 600;
+}
+
+/* Feature-specific debug panel enhancements */
+.debug-panel .vibe-check-info {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+}
+
+.vibe-check-info h4 {
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.vibe-check-info p {
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+}
+
+/* Subtle animations for vibe check */
+@keyframes vibeGlow {
+    0%, 100% { 
+        box-shadow: 0 0 5px rgba(0, 212, 255, 0.3); 
+    }
+    50% { 
+        box-shadow: 0 0 20px rgba(0, 212, 255, 0.6); 
+    }
+}
+
+.vibe-check-active .send-btn:not(:disabled) {
+    animation: vibeGlow 2s ease-in-out infinite;
+}
+
+/* Message styling for vibe check feature */
+.vibe-check-message {
+    border-left: 3px solid var(--primary-color);
+    background: linear-gradient(135deg, 
+        rgba(0, 212, 255, 0.05) 0%, 
+        rgba(16, 185, 129, 0.05) 100%);
+}
+
+/* Feature badge */
+.feature-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    background: var(--gradient-primary);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-md);
+}
+
+.feature-badge i {
+    font-size: 0.875rem;
+}
+
+/* Responsive adjustments for vibe check */
+@media (max-width: 768px) {
+    .vibe-check-info {
+        padding: var(--spacing-sm);
+    }
+    
+    .feature-badge {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.6rem;
+    }
+}
