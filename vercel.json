@@ -3,6 +3,18 @@
         {
             "src": "api/homework_app.py",
             "use": "@vercel/python"
+        },
+        {
+            "src": "frontend/**",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "base/**",
+            "use": "@vercel/static"
+        },
+        {
+            "src": "features/**",
+            "use": "@vercel/static"
         }
     ],
     "routes": [
@@ -11,7 +23,19 @@
             "dest": "/api/homework_app.py"
         },
         {
-            "src": "/(.*)",
+            "src": "/frontend/(.*)",
+            "dest": "/frontend/$1"
+        },
+        {
+            "src": "/base/(.*)",
+            "dest": "/base/$1"
+        },
+        {
+            "src": "/features/(.*)",
+            "dest": "/features/$1"
+        },
+        {
+            "src": "/",
             "dest": "/frontend/unified.html"
         }
     ]
