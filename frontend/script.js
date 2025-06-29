@@ -8,10 +8,82 @@ class ChatInterface {
         this.developerMessage = localStorage.getItem('developer_message') || 'You are a helpful AI assistant for an LLM bootcamp. Help students learn about RAG, prompt engineering, and other LLM techniques. Be clear, educational, and provide practical examples.';
         this.apiBaseUrl = ''; // Backend API server URL
         
+        // Feature configurations for different homework modules
+        this.features = {
+            '01-vibe-check': {
+                name: 'Vibe Check',
+                description: 'Basic LLM chat interface with debug panel',
+                enabled: true,
+                components: {
+                    uploadFile: false,
+                    exportChat: true,
+                    debugPanel: true,
+                    systemPrompt: true
+                },
+                systemPrompt: 'You are a helpful AI assistant for an LLM bootcamp. Help students learn about RAG, prompt engineering, and other LLM techniques. Be clear, educational, and provide practical examples.'
+            },
+            '02-embeddings-rag': {
+                name: 'Embeddings and RAG',
+                description: 'RAG implementation with document upload and vector search',
+                enabled: false,
+                components: {
+                    uploadFile: true,
+                    exportChat: true,
+                    debugPanel: true,
+                    systemPrompt: true,
+                    ragControls: true
+                },
+                systemPrompt: 'You are a helpful AI assistant with access to uploaded documents. Use the provided context to answer questions accurately. If the answer is not in the context, say so clearly.'
+            },
+            '03-agents': {
+                name: 'AI Agents',
+                description: 'Multi-agent system with tool usage',
+                enabled: false,
+                components: {
+                    uploadFile: false,
+                    exportChat: true,
+                    debugPanel: true,
+                    systemPrompt: true,
+                    agentControls: true
+                },
+                systemPrompt: 'You are an AI agent capable of using tools to help users. Break down complex tasks into steps and use the appropriate tools to accomplish them.'
+            },
+            '04-fine-tuning': {
+                name: 'Fine Tuning',
+                description: 'Fine-tuned model comparison and testing',
+                enabled: false,
+                components: {
+                    uploadFile: true,
+                    exportChat: true,
+                    debugPanel: true,
+                    systemPrompt: true,
+                    modelComparison: true
+                },
+                systemPrompt: 'You are a fine-tuned AI assistant specialized in specific domains. Provide expert-level responses based on your training.'
+            },
+            '05-multimodal': {
+                name: 'Multimodal LLMs',
+                description: 'Image and text understanding with multimodal models',
+                enabled: false,
+                components: {
+                    uploadFile: true,
+                    exportChat: true,
+                    debugPanel: true,
+                    systemPrompt: true,
+                    imageUpload: true,
+                    multimodalControls: true
+                },
+                systemPrompt: 'You are a multimodal AI assistant capable of understanding both text and images. Analyze visual content and provide detailed descriptions and insights.'
+            }
+        };
+        
+        this.currentFeature = localStorage.getItem('selected_feature') || '01-vibe-check';
+        
         this.initializeElements();
         this.bindEvents();
         this.loadSettings();
         this.initializeTheme();
+        this.initializeFeature();
         this.updateUI();
     }
 
@@ -42,6 +114,7 @@ class ChatInterface {
         this.uploadFileBtn = document.getElementById('uploadFile');
         this.debugBtn = document.getElementById('debugBtn');
         this.themeToggle = document.getElementById('themeToggle');
+        this.featureSelect = document.getElementById('featureSelect');
 
         // Main Content Area
         this.mainContent = document.getElementById('mainContent');
@@ -98,6 +171,9 @@ class ChatInterface {
         
         // Theme Toggle
         this.themeToggle.addEventListener('click', () => this.toggleTheme());
+        
+        // Feature Selection
+        this.featureSelect.addEventListener('change', (e) => this.switchFeature(e.target.value));
         
         // Content Modal
         this.closeContentModalBtn.addEventListener('click', () => this.closeContentModal());
@@ -875,6 +951,89 @@ class ChatInterface {
         // Get saved theme preference or default to dark
         const savedTheme = localStorage.getItem('theme') || 'dark';
         this.setTheme(savedTheme);
+    }
+    
+    initializeFeature() {
+        // Set the dropdown to the current feature
+        this.featureSelect.value = this.currentFeature;
+        this.applyFeatureSettings();
+    }
+    
+    switchFeature(featureId) {
+        if (!this.features[featureId] || !this.features[featureId].enabled) {
+            // Feature not available, show message
+            this.showNotification(`Feature "${this.features[featureId]?.name || featureId}" is not yet implemented. Stay tuned!`, 'info');
+            // Reset to current feature
+            this.featureSelect.value = this.currentFeature;
+            return;
+        }
+        
+        // Save selected feature
+        this.currentFeature = featureId;
+        localStorage.setItem('selected_feature', featureId);
+        
+        // Apply feature settings
+        this.applyFeatureSettings();
+        
+        // Clear chat when switching features
+        this.clearChat();
+        
+        // Show feature description
+        this.showNotification(`Switched to: ${this.features[featureId].name} - ${this.features[featureId].description}`, 'success');
+    }
+    
+    applyFeatureSettings() {
+        const feature = this.features[this.currentFeature];
+        
+        // Update system prompt
+        this.developerMessage = feature.systemPrompt;
+        localStorage.setItem('developer_message', this.developerMessage);
+        if (this.developerMessageInput) {
+            this.developerMessageInput.value = this.developerMessage;
+        }
+        
+        // Show/hide UI components based on feature
+        const components = feature.components;
+        
+        // Upload file button
+        if (this.uploadFileBtn) {
+            this.uploadFileBtn.style.display = components.uploadFile ? 'flex' : 'none';
+        }
+        
+        // Export chat button
+        if (this.exportChatBtn) {
+            this.exportChatBtn.style.display = components.exportChat ? 'flex' : 'none';
+        }
+        
+        // Debug panel button
+        if (this.debugBtn) {
+            this.debugBtn.style.display = components.debugPanel ? 'flex' : 'none';
+        }
+        
+        // Add feature-specific UI elements here in future implementations
+        // For example: RAG controls, agent panels, etc.
+    }
+    
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+            <span>${message}</span>
+        `;
+        
+        // Add to body
+        document.body.appendChild(notification);
+        
+        // Trigger animation
+        setTimeout(() => notification.classList.add('show'), 10);
+        
+        // Remove after 4 seconds
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => notification.remove(), 300);
+        }, 4000);
     }
 
     toggleTheme() {
