@@ -166,7 +166,8 @@ When users say "vibe check", respond with enthusiasm about their learning journe
             
             # Step 3: Prepare messages
             system_prompt = request.extra_data.get('developer_message') or await self.get_system_prompt()
-            messages_task = asyncio.create_task(self.prepare_base_messages(processed_message, system_prompt))
+            message_chain = request.extra_data.get('message_chain', [])
+            messages_task = asyncio.create_task(self.prepare_base_messages(processed_message, system_prompt, message_chain))
             while not messages_task.done():
                 async for debug_msg in drain_fn(debug_queue):
                     yield debug_msg
