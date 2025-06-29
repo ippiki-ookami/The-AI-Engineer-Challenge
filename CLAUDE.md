@@ -287,3 +287,166 @@ result = await task
 The debug panel is a core feature that provides educational value by showing users exactly how the LLM pipeline works. Every function that plays a role in LLM processing must be decorated with `@debug_track` to maintain this transparency.
 
 When in doubt, decorate the function - it's better to have too much visibility than too little in an educational environment.
+
+## Homework Isolation Architecture
+
+### 🏗️ **Creating New Homework Assignments**
+
+When adding new homework assignments, follow this pattern for complete code isolation:
+
+#### **1. Folder Structure**
+```bash
+features/
+└── XX-homework-name/
+    ├── backend/
+    │   └── handler.py          # Isolated homework handler
+    └── frontend/ (optional)
+        ├── homework-name.css   # Homework-specific styles
+        └── homework-name.js    # Homework-specific functionality
+```
+
+#### **2. Handler Implementation**
+```python
+# features/XX-homework-name/backend/handler.py
+import sys
+from pathlib import Path
+
+# Add base directory to path for imports
+sys.path.append(str(Path(__file__).parent.parent.parent.parent))
+
+from base.backend.base_handler import BaseChatHandler, BaseChatRequest
+from base.backend.debug_logger import debug_track
+
+class HomeworkNameHandler(BaseChatHandler):
+    def __init__(self):
+        super().__init__("Homework Name")
+    
+    @debug_track("Homework-Specific Function")
+    async def homework_specific_function(self):
+        # Isolated homework logic with debug tracking
+        pass
+    
+    # Required abstract method implementations
+    async def get_system_prompt(self) -> str:
+        return "Homework-specific system prompt"
+    
+    async def process_user_message(self, request: BaseChatRequest) -> str:
+        return request.user_message  # Homework-specific processing
+    
+    async def enhance_messages(self, messages: list, request: BaseChatRequest) -> list:
+        return messages  # Homework-specific enhancements
+```
+
+#### **3. Enable in Configuration**
+```python
+# api/homework_app.py - Add to HOMEWORK_FEATURES
+"XX-homework-name": {
+    "name": "Homework Display Name",
+    "path": "features/XX-homework-name/backend", 
+    "handler_class": "HomeworkNameHandler",
+    "enabled": True  # Set to True when ready
+}
+```
+
+#### **4. Frontend Integration (Optional)**
+```javascript
+// features/XX-homework-name/frontend/homework-name.js
+class HomeworkNameManager {
+    init() {
+        // Homework-specific UI logic
+        console.log('📚 Homework Name Manager initialized');
+    }
+    
+    cleanup() {
+        // Clean up when switching away
+    }
+}
+window.HomeworkNameManager = HomeworkNameManager;
+```
+
+### 🔍 **Debug Tracking Patterns for Different Homework**
+
+#### **Document Processing (RAG-style)**
+```python
+@debug_track("Processing Document Upload")
+async def process_document_upload(self, file_name: str, file_content: str):
+    # Document processing logic
+    return {"success": True, "content_preview": file_content[:500]}
+
+@debug_track("Searching Document Store")
+async def search_documents(self, query: str):
+    # Search logic
+    return search_results
+```
+
+#### **Educational Tests (Vibe Check-style)**
+```python
+@debug_track("3-Second Processing Test")
+async def three_second_test(self) -> str:
+    await asyncio.sleep(3.0)
+    return "Test completed successfully!"
+
+@debug_track("Parallel Failure Test", optional=True)
+async def parallel_failure_test(self) -> str:
+    # 70% chance of failure for educational purposes
+    if random.random() < 0.7:
+        raise ConnectionError("Simulated failure")
+    return "Optional test succeeded"
+```
+
+#### **API Integration**
+```python
+@debug_track("Calling External API")
+async def call_external_api(self, params: dict):
+    # External service integration
+    return api_response
+
+@debug_track("Processing API Response", track_result=False)
+async def process_api_response(self, response):
+    # Large response processing
+    return processed_data
+```
+
+### 🎯 **Homework-Specific Guidelines**
+
+#### **✅ DO for Each Homework:**
+- Create completely isolated handlers
+- Use homework-specific debug track titles
+- Implement all required abstract methods
+- Follow the import pattern for base classes
+- Add meaningful debug tracking for educational value
+
+#### **❌ DON'T:**
+- Share state between homework assignments
+- Import code from other homework assignments
+- Use generic function names across homework
+- Skip debug tracking for homework-specific functions
+- Mix homework logic in base classes
+
+### 🔄 **Testing Homework Isolation**
+
+When developing new homework:
+
+1. ✅ **Switch between homework assignments** - ensure no interference
+2. ✅ **Check debug panel content** - verify homework-specific functions appear
+3. ✅ **Test with different API keys** - ensure isolation is maintained
+4. ✅ **Verify frontend assets load correctly** - CSS/JS specific to homework
+5. ✅ **Clear chat between switches** - ensure clean state
+
+### 📊 **Deployment Considerations**
+
+All homework assignments deploy together via `api/homework_app.py`:
+
+```python
+# Unified routing automatically handles all enabled homework
+@app.post("/api/chat")
+async def homework_chat(request: ChatRequest):
+    handler = load_homework_handler(request.feature_id)  # Isolated loading
+    return StreamingResponse(handler.process_chat(request))
+```
+
+This architecture ensures:
+- ✅ **Complete code isolation** between assignments
+- ✅ **Seamless user experience** via unified interface  
+- ✅ **Educational transparency** through homework-specific debug tracking
+- ✅ **Scalable deployment** of all homework assignments together
