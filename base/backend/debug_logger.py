@@ -131,8 +131,14 @@ class DebugLogger:
                     # Execute the function
                     result = await func(*args, **kwargs)
                     
-                    # Update with success
-                    result_data = input_data.copy() if input_data else {}
+                    # Update with success - create clear input/output structure
+                    result_data = {}
+                    
+                    # Add inputs section if we have input data
+                    if input_data:
+                        result_data["📥 INPUTS"] = input_data
+                    
+                    # Add outputs section if we should track results
                     if track_result and result is not None:
                         # Check if result is JSON serializable before including it
                         try:
@@ -141,25 +147,35 @@ class DebugLogger:
                             # Only include result if it's reasonably sized and serializable
                             result_str = str(result)
                             if len(result_str) < 1000:
-                                result_data["result"] = result
+                                result_data["📤 OUTPUT"] = result
                             else:
-                                result_data["result"] = f"<Large result: {type(result).__name__}>"
+                                result_data["📤 OUTPUT"] = f"<Large result: {type(result).__name__}>"
                         except (TypeError, ValueError):
                             # For non-serializable results, store type info
-                            result_data["result"] = f"<{type(result).__name__} object>"
+                            result_data["📤 OUTPUT"] = f"<{type(result).__name__} object>"
+                    elif track_result:
+                        result_data["📤 OUTPUT"] = None
                     
                     self.update_log_status(log_id, "success", result_data)
                     return result
                     
                 except Exception as e:
-                    # Update with error - make it clickable with full details
+                    # Update with error - create clear input/error structure
                     import traceback
-                    error_data = input_data.copy() if input_data else {}
-                    error_data["error_message"] = str(e)
-                    error_data["error_type"] = type(e).__name__
-                    error_data["full_traceback"] = traceback.format_exc()
-                    error_data["function_name"] = func.__name__
-                    error_data["optional_failure"] = str(optional)
+                    error_data = {}
+                    
+                    # Add inputs section if we have input data
+                    if input_data:
+                        error_data["📥 INPUTS"] = input_data
+                    
+                    # Add error section
+                    error_data["❌ ERROR"] = {
+                        "error_message": str(e),
+                        "error_type": type(e).__name__,
+                        "full_traceback": traceback.format_exc(),
+                        "function_name": func.__name__,
+                        "optional_failure": str(optional)
+                    }
                     
                     # Update the log entry to be clickable and trigger status callback
                     self.update_log_status(log_id, "error", error_data)
@@ -224,8 +240,14 @@ class DebugLogger:
                     # Execute the function
                     result = func(*args, **kwargs)
                     
-                    # Update with success
-                    result_data = input_data.copy() if input_data else {}
+                    # Update with success - create clear input/output structure
+                    result_data = {}
+                    
+                    # Add inputs section if we have input data
+                    if input_data:
+                        result_data["📥 INPUTS"] = input_data
+                    
+                    # Add outputs section if we should track results
                     if track_result and result is not None:
                         # Check if result is JSON serializable before including it
                         try:
@@ -234,25 +256,35 @@ class DebugLogger:
                             # Only include result if it's reasonably sized and serializable
                             result_str = str(result)
                             if len(result_str) < 1000:
-                                result_data["result"] = result
+                                result_data["📤 OUTPUT"] = result
                             else:
-                                result_data["result"] = f"<Large result: {type(result).__name__}>"
+                                result_data["📤 OUTPUT"] = f"<Large result: {type(result).__name__}>"
                         except (TypeError, ValueError):
                             # For non-serializable results, store type info
-                            result_data["result"] = f"<{type(result).__name__} object>"
+                            result_data["📤 OUTPUT"] = f"<{type(result).__name__} object>"
+                    elif track_result:
+                        result_data["📤 OUTPUT"] = None
                     
                     self.update_log_status(log_id, "success", result_data)
                     return result
                     
                 except Exception as e:
-                    # Update with error - make it clickable with full details
+                    # Update with error - create clear input/error structure
                     import traceback
-                    error_data = input_data.copy() if input_data else {}
-                    error_data["error_message"] = str(e)
-                    error_data["error_type"] = type(e).__name__
-                    error_data["full_traceback"] = traceback.format_exc()
-                    error_data["function_name"] = func.__name__
-                    error_data["optional_failure"] = str(optional)
+                    error_data = {}
+                    
+                    # Add inputs section if we have input data
+                    if input_data:
+                        error_data["📥 INPUTS"] = input_data
+                    
+                    # Add error section
+                    error_data["❌ ERROR"] = {
+                        "error_message": str(e),
+                        "error_type": type(e).__name__,
+                        "full_traceback": traceback.format_exc(),
+                        "function_name": func.__name__,
+                        "optional_failure": str(optional)
+                    }
                     
                     # Update the log entry to be clickable and trigger status callback
                     self.update_log_status(log_id, "error", error_data)

@@ -1020,6 +1020,7 @@ class BaseChatInterface {
         };
         
         this.messageChainData.push(newMessage);
+        
         this.renderMessageChain();
         
         // Focus on the new message content input
@@ -1038,6 +1039,8 @@ class BaseChatInterface {
         const message = this.messageChainData.find(msg => msg.id === messageId);
         if (message) {
             message[field] = value;
+        } else {
+            // Message not found
         }
     }
 
@@ -1106,6 +1109,7 @@ class BaseChatInterface {
         this.saveStatus.textContent = 'Saving...';
         
         try {
+            
             // Save developer message
             this.developerMessage = this.developerMessageInput.value;
             localStorage.setItem('developer_message', this.developerMessage);
@@ -1144,9 +1148,6 @@ class BaseChatInterface {
         // Return the message chain for use in chat processing
         const filteredChain = this.messageChainData.filter(msg => msg.content.trim() !== '');
         // Add debugging to see what's being sent
-        if (filteredChain.length > 0) {
-            console.log('📤 Sending message chain:', filteredChain);
-        }
         return filteredChain;
     }
 }
