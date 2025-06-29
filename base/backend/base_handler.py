@@ -71,12 +71,22 @@ class BaseChatHandler(ABC):
                 break
     
     @debug_track("Preparing Base Messages")
-    async def prepare_base_messages(self, user_message: str, system_prompt: str) -> list:
+    async def prepare_base_messages(self, user_message: str, system_prompt: str, message_chain: Optional[list] = None) -> list:
         """Prepare basic message structure that features can extend"""
-        return [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
-        ]
+        messages = [{"role": "system", "content": system_prompt}]
+        
+        # Add message chain examples if provided (for few-shot prompting)
+        if message_chain:
+            for chain_msg in message_chain:
+                if chain_msg.get('content', '').strip():  # Only add non-empty messages
+                    messages.append({
+                        "role": chain_msg.get('role', 'user'),
+                        "content": chain_msg['content']
+                    })
+        
+        # Add the current user message
+        messages.append({"role": "user", "content": user_message})
+        return messages
     
     @debug_track("Calling OpenAI API", track_result=False)
     async def call_openai(self, client: OpenAI, messages: list, model: str) -> Any:
@@ -158,7 +168,8 @@ class BaseChatHandler(ABC):
             # Step 3: Prepare messages
             # Use developer_message from request if provided, otherwise use feature's system prompt
             system_prompt = request.extra_data.get('developer_message') or await self.get_system_prompt()
-            messages_task = asyncio.create_task(self.prepare_base_messages(processed_message, system_prompt))
+            message_chain = request.extra_data.get('message_chain', [])
+            messages_task = asyncio.create_task(self.prepare_base_messages(processed_message, system_prompt, message_chain))
             while not messages_task.done():
                 async for debug_msg in drain_fn(debug_queue):
                     yield debug_msg

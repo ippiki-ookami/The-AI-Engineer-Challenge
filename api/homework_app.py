@@ -27,6 +27,7 @@ class ChatRequest(BaseModel):
     model: str
     api_key: str
     feature_id: Optional[str] = "01-vibe-check"
+    message_chain: Optional[list] = []
 
 
 class KeyValidationRequest(BaseModel):
@@ -270,7 +271,8 @@ async def homework_chat(request: ChatRequest):
             model=request.model,
             # Pass additional data as kwargs
             developer_message=request.developer_message,
-            feature_id=request.feature_id
+            feature_id=request.feature_id,
+            message_chain=request.message_chain
         )
         
         # Process using the isolated homework handler

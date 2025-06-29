@@ -106,6 +106,13 @@ class BaseChatInterface {
         this.defaultModel = document.getElementById('defaultModel');
         this.developerMessageInput = document.getElementById('developerMessage');
         
+        // Message chain builder
+        this.messageChain = document.getElementById('messageChain');
+        this.addMessageBtn = document.getElementById('addMessage');
+        this.saveSettingsBtn = document.getElementById('saveSettings');
+        this.saveStatus = document.getElementById('saveStatus');
+        this.messageChainData = []; // Store message chain in memory
+        
         // Buttons
         this.clearChatBtn = document.getElementById('clearChat');
         this.settingsBtn = document.getElementById('settings');
@@ -162,6 +169,10 @@ class BaseChatInterface {
         // Settings
         this.settingsBtn.addEventListener('click', () => this.openSettings());
         this.closeSettingsBtn.addEventListener('click', () => this.closeSettings());
+        
+        // Message chain builder event listeners
+        this.addMessageBtn.addEventListener('click', () => this.addMessageToChain());
+        this.saveSettingsBtn.addEventListener('click', () => this.saveSettings());
         this.settingsModal.addEventListener('click', (e) => {
             if (e.target === this.settingsModal) this.closeSettings();
         });
@@ -211,6 +222,9 @@ class BaseChatInterface {
         this.modelSelect.value = savedModel;
         this.defaultModel.value = savedModel;
         this.developerMessageInput.value = this.developerMessage;
+        
+        // Initialize message chain UI
+        this.renderMessageChain();
 
         if (this.apiKey) {
             this.validateApiKey(this.apiKey, true);
@@ -361,7 +375,8 @@ class BaseChatInterface {
                 user_message: userMessage,
                 model: this.currentModel,
                 api_key: this.apiKey,
-                feature_id: this.currentFeature
+                feature_id: this.currentFeature,
+                message_chain: this.getMessageChain()
             })
         });
 
@@ -829,6 +844,7 @@ class BaseChatInterface {
 
     openSettings() {
         this.settingsModal.classList.add('active');
+        this.renderMessageChain(); // Refresh the message chain display
     }
 
     closeSettings() {
@@ -984,6 +1000,122 @@ class BaseChatInterface {
             icon.className = 'fas fa-moon';
             this.themeToggle.title = 'Switch to Dark Mode';
         }
+    }
+
+    // Message Chain Builder Methods
+    addMessageToChain() {
+        const messageId = 'msg_' + Date.now();
+        const newMessage = {
+            id: messageId,
+            role: 'user',
+            content: ''
+        };
+        
+        this.messageChainData.push(newMessage);
+        this.renderMessageChain();
+        
+        // Focus on the new message content input
+        setTimeout(() => {
+            const contentInput = document.querySelector(`#${messageId} .message-content-input`);
+            if (contentInput) contentInput.focus();
+        }, 100);
+    }
+
+    removeMessageFromChain(messageId) {
+        this.messageChainData = this.messageChainData.filter(msg => msg.id !== messageId);
+        this.renderMessageChain();
+    }
+
+    updateMessageInChain(messageId, field, value) {
+        const message = this.messageChainData.find(msg => msg.id === messageId);
+        if (message) {
+            message[field] = value;
+        }
+    }
+
+    renderMessageChain() {
+        if (!this.messageChain) return;
+
+        if (this.messageChainData.length === 0) {
+            this.messageChain.innerHTML = `
+                <div class="message-chain-empty">
+                    <i class="fas fa-comments"></i>
+                    <div>No conversation examples yet</div>
+                    <div style="font-size: 0.8em; margin-top: 0.5rem;">Add messages to create few-shot prompting examples</div>
+                </div>
+            `;
+            return;
+        }
+
+        this.messageChain.innerHTML = this.messageChainData.map(message => `
+            <div class="message-item" id="${message.id}">
+                <div class="message-header">
+                    <select class="message-role" onchange="window.chatInterface.updateMessageInChain('${message.id}', 'role', this.value)">
+                        <option value="system" ${message.role === 'system' ? 'selected' : ''}>System</option>
+                        <option value="user" ${message.role === 'user' ? 'selected' : ''}>User</option>
+                        <option value="assistant" ${message.role === 'assistant' ? 'selected' : ''}>Assistant</option>
+                    </select>
+                    <button class="remove-message-btn" onclick="window.chatInterface.removeMessageFromChain('${message.id}')" title="Remove message">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <textarea 
+                    class="message-content-input" 
+                    placeholder="Enter ${message.role} message content..."
+                    onchange="window.chatInterface.updateMessageInChain('${message.id}', 'content', this.value)"
+                >${message.content}</textarea>
+            </div>
+        `).join('');
+
+        // Update role styling
+        this.messageChain.querySelectorAll('.message-role').forEach(select => {
+            select.className = `message-role ${select.value}`;
+        });
+    }
+
+    saveSettings() {
+        this.saveSettingsBtn.disabled = true;
+        this.saveStatus.className = 'save-status';
+        this.saveStatus.textContent = 'Saving...';
+        
+        try {
+            // Save developer message
+            this.developerMessage = this.developerMessageInput.value;
+            localStorage.setItem('developer_message', this.developerMessage);
+            
+            // Save model selection
+            this.currentModel = this.defaultModel.value;
+            this.modelSelect.value = this.currentModel;
+            localStorage.setItem('default_model', this.currentModel);
+            
+            // Note: Message chain is session-only storage (not persisted to localStorage)
+            // This is intentional - message chains are cleared on page refresh
+            
+            // Show success
+            this.saveStatus.className = 'save-status success';
+            this.saveStatus.textContent = '✓ Settings saved (session only)';
+            
+            // Hide status after 3 seconds
+            setTimeout(() => {
+                this.saveStatus.className = 'save-status';
+            }, 3000);
+            
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            this.saveStatus.className = 'save-status error';
+            this.saveStatus.textContent = '✗ Error saving settings';
+            
+            setTimeout(() => {
+                this.saveStatus.className = 'save-status';
+            }, 3000);
+        } finally {
+            this.saveSettingsBtn.disabled = false;
+        }
+    }
+
+    getMessageChain() {
+        // Return the message chain for use in chat processing
+        return this.messageChainData.filter(msg => msg.content.trim() !== '');
     }
 }
 

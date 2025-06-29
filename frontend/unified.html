@@ -143,9 +143,32 @@
                             <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
                         </select>
                     </div>
+                    
                     <div class="setting-group">
                         <label>Developer Message (System Prompt):</label>
                         <textarea id="developerMessage" rows="4" placeholder="Enter a system prompt to guide the AI's behavior..."></textarea>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <div class="setting-header">
+                            <label>Message Chain (Few-Shot Prompting):</label>
+                            <button id="addMessage" class="add-message-btn" type="button">
+                                <i class="fas fa-plus"></i> Add Message
+                            </button>
+                        </div>
+                        <div class="message-chain-hint">
+                            Build conversation examples that will be added after the system prompt. Perfect for few-shot prompting!
+                        </div>
+                        <div id="messageChain" class="message-chain">
+                            <!-- Message chain items will be added here dynamically -->
+                        </div>
+                    </div>
+                    
+                    <div class="settings-actions">
+                        <button id="saveSettings" class="save-settings-btn">
+                            <i class="fas fa-save"></i> Save Settings
+                        </button>
+                        <div id="saveStatus" class="save-status"></div>
                     </div>
                 </div>
             </div>
