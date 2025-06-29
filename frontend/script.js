@@ -360,7 +360,8 @@ class ChatInterface {
                 developer_message: this.developerMessage,
                 user_message: userMessage,
                 model: this.currentModel,
-                api_key: this.apiKey
+                api_key: this.apiKey,
+                feature_id: this.currentFeature
             })
         });
 

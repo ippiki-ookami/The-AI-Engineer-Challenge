@@ -40,6 +40,7 @@ class ChatRequest(BaseModel):
     user_message: str      # Message from the user
     model: str = "gpt-4.1-mini"  # Optional model selection with default
     api_key: str          # OpenAI API key for authentication
+    feature_id: Optional[str] = "01-vibe-check"  # Feature selection for homework modules
 
 # Define a Pydantic model for API key validation requests
 class ApiKeyRequest(BaseModel):
