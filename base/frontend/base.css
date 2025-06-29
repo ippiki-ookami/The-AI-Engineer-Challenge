@@ -682,7 +682,7 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-xl);
-    max-width: 500px;
+    max-width: 650px;
     width: 90%;
     max-height: 80vh;
     overflow-y: auto;
@@ -812,6 +812,7 @@ body {
     gap: var(--spacing-md);
     max-height: 300px;
     overflow-y: auto;
+    padding-right: var(--spacing-sm);
 }
 
 .message-item {
@@ -836,12 +837,13 @@ body {
 }
 
 .message-role {
-    background: var(--bg-tertiary);
+    background: var(--bg-elevated);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     padding: 0.25rem 0.5rem;
     border-radius: var(--radius-md);
     font-size: 0.8rem;
+    font-weight: 500;
     cursor: pointer;
     transition: var(--transition-fast);
 }
@@ -852,9 +854,24 @@ body {
     outline: none;
 }
 
-.message-role.system { background: rgba(0, 212, 255, 0.1); border-color: var(--primary-color); }
-.message-role.user { background: rgba(16, 185, 129, 0.1); border-color: var(--secondary-color); }
-.message-role.assistant { background: rgba(245, 158, 11, 0.1); border-color: var(--accent-color); }
+.message-role.system { 
+    background: rgba(0, 212, 255, 0.15); 
+    border-color: var(--primary-color); 
+    color: var(--primary-color);
+    font-weight: 600;
+}
+.message-role.user { 
+    background: rgba(16, 185, 129, 0.15); 
+    border-color: var(--secondary-color); 
+    color: var(--secondary-color);
+    font-weight: 600;
+}
+.message-role.assistant { 
+    background: rgba(245, 158, 11, 0.15); 
+    border-color: var(--accent-color); 
+    color: var(--accent-color);
+    font-weight: 600;
+}
 
 .remove-message-btn {
     background: none;
@@ -992,6 +1009,33 @@ body {
 .notification.show {
     opacity: 1;
     transform: translateX(0);
+}
+
+/* Modern Scrollbar Styling */
+.message-chain::-webkit-scrollbar {
+    width: 6px;
+}
+
+.message-chain::-webkit-scrollbar-track {
+    background: var(--bg-tertiary);
+    border-radius: 10px;
+    margin: 4px 0;
+}
+
+.message-chain::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+    transition: var(--transition-fast);
+}
+
+.message-chain::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
+
+/* For Firefox */
+.message-chain {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) var(--bg-tertiary);
 }
 
 .notification i {
