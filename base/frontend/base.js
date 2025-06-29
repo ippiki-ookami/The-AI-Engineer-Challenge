@@ -1050,26 +1050,45 @@ class BaseChatInterface {
         this.messageChain.innerHTML = this.messageChainData.map(message => `
             <div class="message-item" id="${message.id}">
                 <div class="message-header">
-                    <select class="message-role" onchange="window.chatInterface.updateMessageInChain('${message.id}', 'role', this.value)">
+                    <select class="message-role" data-message-id="${message.id}">
                         <option value="system" ${message.role === 'system' ? 'selected' : ''}>System</option>
                         <option value="user" ${message.role === 'user' ? 'selected' : ''}>User</option>
                         <option value="assistant" ${message.role === 'assistant' ? 'selected' : ''}>Assistant</option>
                     </select>
-                    <button class="remove-message-btn" onclick="window.chatInterface.removeMessageFromChain('${message.id}')" title="Remove message">
+                    <button class="remove-message-btn" data-message-id="${message.id}" title="Remove message">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
                 <textarea 
                     class="message-content-input" 
+                    data-message-id="${message.id}"
                     placeholder="Enter ${message.role} message content..."
-                    onchange="window.chatInterface.updateMessageInChain('${message.id}', 'content', this.value)"
                 >${message.content}</textarea>
             </div>
         `).join('');
-
-        // Update role styling
+        
+        // Add event listeners using proper event delegation
         this.messageChain.querySelectorAll('.message-role').forEach(select => {
             select.className = `message-role ${select.value}`;
+            select.addEventListener('change', (e) => {
+                const messageId = e.target.dataset.messageId;
+                this.updateMessageInChain(messageId, 'role', e.target.value);
+                e.target.className = `message-role ${e.target.value}`;
+            });
+        });
+        
+        this.messageChain.querySelectorAll('.message-content-input').forEach(textarea => {
+            textarea.addEventListener('input', (e) => {
+                const messageId = e.target.dataset.messageId;
+                this.updateMessageInChain(messageId, 'content', e.target.value);
+            });
+        });
+        
+        this.messageChain.querySelectorAll('.remove-message-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const messageId = e.currentTarget.dataset.messageId;
+                this.removeMessageFromChain(messageId);
+            });
         });
     }
 
@@ -1115,7 +1134,12 @@ class BaseChatInterface {
 
     getMessageChain() {
         // Return the message chain for use in chat processing
-        return this.messageChainData.filter(msg => msg.content.trim() !== '');
+        const filteredChain = this.messageChainData.filter(msg => msg.content.trim() !== '');
+        // Add debugging to see what's being sent
+        if (filteredChain.length > 0) {
+            console.log('📤 Sending message chain:', filteredChain);
+        }
+        return filteredChain;
     }
 }
 
