@@ -2,6 +2,8 @@ import time
 from typing import List, Dict, Any, Optional
 from functools import wraps
 import inspect
+import ast
+import textwrap
 
 class DebugLogger:
     def __init__(self):
@@ -60,6 +62,49 @@ class DebugLogger:
     def set_status_callback(self, callback):
         """Set callback function to stream status updates immediately"""
         self.status_callback = callback
+    
+    def _get_function_source(self, func):
+        """Extract source code and metadata for a function"""
+        try:
+            # Get the source code
+            source_lines, start_line = inspect.getsourcelines(func)
+            source_code = ''.join(source_lines)
+            
+            # Clean up indentation
+            source_code = textwrap.dedent(source_code)
+            
+            # Get file path
+            file_path = inspect.getfile(func)
+            
+            # Try to get just the relative path from project root
+            if '/The-AI-Engineer-Challenge/' in file_path:
+                relative_path = file_path.split('/The-AI-Engineer-Challenge/')[-1]
+            else:
+                relative_path = file_path
+            
+            # Get function signature
+            try:
+                signature = str(inspect.signature(func))
+            except Exception:
+                signature = "(...)"
+            
+            return {
+                "source_code": source_code,
+                "file_path": relative_path,
+                "start_line": start_line,
+                "function_name": func.__name__,
+                "signature": signature,
+                "docstring": inspect.getdoc(func) or "No documentation available"
+            }
+        except Exception as e:
+            return {
+                "source_code": f"# Source code not available: {str(e)}",
+                "file_path": "unknown",
+                "start_line": 0,
+                "function_name": func.__name__,
+                "signature": "(...)",
+                "docstring": "Documentation not available"
+            }
 
     def update_log_status(self, log_id: int, status: str, data: Any = None):
         """Update the status and optionally data of an existing log entry"""
@@ -138,6 +183,9 @@ class DebugLogger:
                     if input_data:
                         result_data["📥 INPUTS"] = input_data
                     
+                    # Add source code section
+                    result_data["💻 SOURCE"] = self._get_function_source(func)
+                    
                     # Add outputs section if we should track results
                     if track_result and result is not None:
                         # Check if result is JSON serializable before including it
@@ -167,6 +215,9 @@ class DebugLogger:
                     # Add inputs section if we have input data
                     if input_data:
                         error_data["📥 INPUTS"] = input_data
+                    
+                    # Add source code section
+                    error_data["💻 SOURCE"] = self._get_function_source(func)
                     
                     # Add error section
                     error_data["❌ ERROR"] = {
@@ -247,6 +298,9 @@ class DebugLogger:
                     if input_data:
                         result_data["📥 INPUTS"] = input_data
                     
+                    # Add source code section
+                    result_data["💻 SOURCE"] = self._get_function_source(func)
+                    
                     # Add outputs section if we should track results
                     if track_result and result is not None:
                         # Check if result is JSON serializable before including it
@@ -276,6 +330,9 @@ class DebugLogger:
                     # Add inputs section if we have input data
                     if input_data:
                         error_data["📥 INPUTS"] = input_data
+                    
+                    # Add source code section
+                    error_data["💻 SOURCE"] = self._get_function_source(func)
                     
                     # Add error section
                     error_data["❌ ERROR"] = {

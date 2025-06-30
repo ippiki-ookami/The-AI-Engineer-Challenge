@@ -451,10 +451,23 @@ class BaseChatInterface {
             contentHtml = `<div class="debug-log-content">${log.content.data}</div>`;
         }
 
+        // Check if we have source code data to show a "View Code" button
+        const hasSourceCode = log.content.data && 
+                             (log.content.data["💻 SOURCE"] || 
+                              (log.content.data["📥 INPUTS"] && log.content.data["💻 SOURCE"]));
+        
+        const codeButtonHtml = hasSourceCode ? 
+            `<button class="view-code-btn" data-logid="${log.id}" title="View Source Code">
+                <i class="fas fa-code"></i>
+            </button>` : '';
+
         entryDiv.innerHTML = `
             <div class="debug-log-title">
                 <span>${log.title}</span>
-                ${log.content.type === 'clickable' ? contentHtml : ''}
+                <div class="debug-log-actions">
+                    ${log.content.type === 'clickable' ? contentHtml : ''}
+                    ${codeButtonHtml}
+                </div>
             </div>
             ${log.content.type !== 'clickable' ? contentHtml : ''}
         `;
@@ -472,6 +485,14 @@ class BaseChatInterface {
                     this.showDebugEntry(log);
                 });
             }
+        }
+        
+        // Add event listener for "View Code" button
+        const codeBtn = entryDiv.querySelector('.view-code-btn');
+        if (codeBtn) {
+            codeBtn.addEventListener('click', () => {
+                this.showSourceCode(log);
+            });
         }
 
         this.debugContent.scrollTop = this.debugContent.scrollHeight;
@@ -1149,6 +1170,89 @@ class BaseChatInterface {
         const filteredChain = this.messageChainData.filter(msg => msg.content.trim() !== '');
         // Add debugging to see what's being sent
         return filteredChain;
+    }
+
+    showSourceCode(log) {
+        // Extract source code data from the log
+        const sourceData = log.content.data && log.content.data["💻 SOURCE"];
+        
+        if (!sourceData) {
+            console.warn('No source code data available for this function');
+            return;
+        }
+
+        // Create and show the source code modal
+        this.displaySourceCodeModal(sourceData, log.title);
+    }
+
+    displaySourceCodeModal(sourceData, title) {
+        // Create modal backdrop
+        const modalBackdrop = document.createElement('div');
+        modalBackdrop.className = 'source-code-modal-backdrop';
+        modalBackdrop.id = 'sourceCodeModalBackdrop';
+        
+        // Create modal content
+        modalBackdrop.innerHTML = `
+            <div class="source-code-modal">
+                <div class="source-code-header">
+                    <div class="source-code-title">
+                        <i class="fas fa-code"></i>
+                        <span>${title}</span>
+                    </div>
+                    <button class="source-code-close" id="sourceCodeClose">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="source-code-info">
+                    <div class="source-code-meta">
+                        <span class="source-file"><i class="fas fa-file-code"></i> ${sourceData.file_path}:${sourceData.start_line}</span>
+                        <span class="source-signature"><i class="fas fa-function"></i> ${sourceData.function_name}${sourceData.signature}</span>
+                    </div>
+                    ${sourceData.docstring !== "No documentation available" ? 
+                        `<div class="source-docstring">
+                            <i class="fas fa-info-circle"></i>
+                            <span>${sourceData.docstring}</span>
+                        </div>` : ''
+                    }
+                </div>
+                <div class="source-code-content">
+                    <pre><code class="language-python">${this.escapeHtml(sourceData.source_code)}</code></pre>
+                </div>
+            </div>
+        `;
+        
+        // Add to DOM
+        document.body.appendChild(modalBackdrop);
+        
+        // Add event listeners
+        document.getElementById('sourceCodeClose').addEventListener('click', () => {
+            this.closeSourceCodeModal();
+        });
+        
+        modalBackdrop.addEventListener('click', (e) => {
+            if (e.target === modalBackdrop) {
+                this.closeSourceCodeModal();
+            }
+        });
+        
+        // Add escape key listener
+        const escapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeSourceCodeModal();
+                document.removeEventListener('keydown', escapeHandler);
+            }
+        };
+        document.addEventListener('keydown', escapeHandler);
+        
+        // Store escape handler for cleanup
+        modalBackdrop.dataset.escapeHandler = 'attached';
+    }
+
+    closeSourceCodeModal() {
+        const modal = document.getElementById('sourceCodeModalBackdrop');
+        if (modal) {
+            modal.remove();
+        }
     }
 }
 
