@@ -234,3 +234,264 @@
 .status-indicator.error {
     color: var(--danger-color);
 }
+
+/* Documents Modal Styles */
+.chat-container {
+    position: relative; /* Required for absolute positioning of documents button */
+}
+
+/* Star Wars-style fade effect for chat messages - RAG homework only */
+.chat-messages::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 150px; /* Increased height for better fade effect */
+    background: linear-gradient(
+        to bottom,
+        var(--bg-secondary) 0%,
+        var(--bg-secondary) 10%,
+        rgba(42, 52, 65, 0.95) 25%,
+        rgba(42, 52, 65, 0.7) 50%,
+        rgba(42, 52, 65, 0.3) 75%,
+        transparent 100%
+    ) !important;
+    pointer-events: none; /* Allow clicking through the overlay */
+    z-index: 999; /* Very high z-index to ensure it's above everything */
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0; /* Match chat container border radius */
+    backdrop-filter: blur(2px); /* Add subtle blur for extra Star Wars effect */
+    animation: starWarsFade 3s ease-in-out infinite alternate; /* Subtle animation */
+}
+
+/* Star Wars fade animation */
+@keyframes starWarsFade {
+    0% {
+        opacity: 0.9;
+        transform: translateY(-2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Light theme variant - Star Wars fade */
+[data-theme="light"] .chat-messages::before {
+    background: linear-gradient(
+        to bottom,
+        var(--bg-secondary) 0%,
+        var(--bg-secondary) 10%,
+        rgba(255, 255, 255, 0.95) 25%,
+        rgba(255, 255, 255, 0.7) 50%,
+        rgba(255, 255, 255, 0.3) 75%,
+        transparent 100%
+    ) !important;
+    backdrop-filter: blur(2px);
+}
+
+/* Enhanced fade effect for better Star Wars feel */
+.chat-messages::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 80px; /* Secondary fade layer */
+    background: linear-gradient(
+        to bottom,
+        var(--bg-secondary) 0%,
+        transparent 100%
+    ) !important;
+    pointer-events: none;
+    z-index: 998; /* Just below the main fade */
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+/* Floating Action Button (FAB) for documents - positioned above Star Wars fade */
+.documents-btn {
+    position: absolute;
+    top: calc(var(--spacing-lg) + 1rem); /* ~40px from top, above the fade effect */
+    right: calc(var(--spacing-lg) + 1rem);
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none; /* Hidden by default, shown only for RAG */
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-md);
+    z-index: 1000; /* Higher than fade effect to stay visible */
+}
+
+.documents-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: var(--shadow-lg);
+}
+
+.documents-btn i {
+    font-size: 1.2rem;
+}
+
+.documents-modal-content {
+    max-width: 600px;
+    width: 90%;
+}
+
+.documents-section {
+    padding: var(--spacing-md) 0;
+}
+
+.documents-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.documents-count {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.add-document-btn {
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    transition: var(--transition-fast);
+    box-shadow: var(--shadow-sm);
+}
+
+.add-document-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.documents-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.documents-empty {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-muted);
+}
+
+.documents-empty i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+    margin-bottom: var(--spacing-md);
+}
+
+.documents-empty p {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-secondary);
+}
+
+.documents-empty span {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+/* Enhanced document item styles for modal */
+.document-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-fast);
+}
+
+.document-item:hover {
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.document-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex: 1;
+}
+
+.document-icon {
+    color: var(--primary-color);
+    font-size: 1.5rem;
+    width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-details h4 {
+    margin: 0 0 0.25rem 0;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.document-details p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.document-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+}
+
+.action-btn {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition-fast);
+    font-size: 0.9rem;
+}
+
+.action-btn:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--bg-elevated);
+    transform: translateY(-1px);
+}
+
+.action-btn.delete:hover {
+    border-color: var(--danger-color);
+    color: var(--danger-color);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.action-btn.view:hover {
+    border-color: var(--secondary-color);
+    color: var(--secondary-color);
+    background: rgba(16, 185, 129, 0.1);
+}
