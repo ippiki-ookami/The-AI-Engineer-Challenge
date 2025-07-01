@@ -56,24 +56,30 @@
         <main class="main-content" id="mainContent">
             <!-- Chat Container -->
             <div class="chat-container" id="chatContainer">
-                <div class="chat-messages" id="chatMessages">
-                    <!-- Welcome message -->
-                    <div class="message system-message">
-                        <div class="message-content">
-                            <div class="message-header">
-                                <i class="fas fa-robot"></i>
-                                <span>AI Assistant</span>
-                            </div>
-                            <div class="message-text">
-                                🎓 Welcome to the <strong>LLM Bootcamp Unified Platform</strong>! 
-                                <br><br>
-                                Each homework assignment is completely isolated in its own code while providing a seamless experience. Use the dropdown above to switch between different homework assignments.
-                                <br><br>
-                                To get started, please enter your OpenAI API key.
+                <div class="chat-viewport" id="chatViewport">
+                    <div class="chat-messages" id="chatMessages">
+                        <!-- Welcome message -->
+                        <div class="message system-message">
+                            <div class="message-content">
+                                <div class="message-header">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-text">
+                                    🎓 Welcome to the <strong>LLM Bootcamp Unified Platform</strong>! 
+                                    <br><br>
+                                    Each homework assignment is completely isolated in its own code while providing a seamless experience. Use the dropdown above to switch between different homework assignments.
+                                    <br><br>
+                                    To get started, please enter your OpenAI API key.
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                
+                <!-- Floating Documents Button (for RAG homework) -->
+                <button id="documentsBtn" class="documents-btn" title="Manage Documents" style="display: none;">
+                    <i class="fas fa-file-text"></i>
+                </button>
             </div>
 
             <!-- Debug Panel -->
@@ -103,9 +109,6 @@
                 
                 <div class="input-features">
                     <!-- Dynamic based on homework -->
-                    <button id="uploadFile" class="feature-btn" title="Upload file for RAG" style="display: none;">
-                        <i class="fas fa-file-upload"></i>
-                    </button>
                     <button id="exportChat" class="feature-btn" title="Export conversation">
                         <i class="fas fa-download"></i>
                     </button>
@@ -212,6 +215,39 @@
             </div>
         </div>
     </div>
+
+    <!-- Documents Modal (for RAG homework) -->
+    <div class="modal" id="documentsModal" style="display: none;">
+        <div class="modal-content documents-modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-text"></i> Document Manager</h3>
+                <button class="close-btn" id="closeDocumentsModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="documents-section">
+                    <div class="documents-header">
+                        <span class="documents-count">Documents (<span id="documentsCount">0</span>)</span>
+                        <button id="addDocumentBtn" class="add-document-btn">
+                            <i class="fas fa-plus"></i> Add Document
+                        </button>
+                    </div>
+                    
+                    <div class="documents-list" id="documentsList">
+                        <div class="documents-empty" id="documentsEmpty">
+                            <i class="fas fa-file-text"></i>
+                            <p>No documents uploaded yet</p>
+                            <span>Upload documents to enable RAG functionality</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for document upload -->
+    <input type="file" id="documentFileInput" style="display: none;" accept=".pdf,.doc,.docx,.txt" multiple>
 
     <!-- Base JavaScript -->
     <script src="/base/frontend/base.js"></script>

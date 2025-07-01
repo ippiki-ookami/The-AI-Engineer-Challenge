@@ -240,16 +240,32 @@
     position: relative; /* Required for absolute positioning of documents button */
 }
 
-/* Star Wars-style fade overlay for RAG chat window (persistent, always at top of scroll) */
-/* Remove any previous ::before/::after fade effects from this file! */
+/* Chat viewport wrapper for RAG fade effect */
+.chat-viewport {
+    position: relative;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
 
-/* Overlay element: .chat-fade-overlay (added by JS) */
+/* Chat messages inside viewport */
+.chat-viewport .chat-messages {
+    height: 100%;
+    width: 100%;
+    overflow-y: auto;
+    position: relative;
+    z-index: 1;
+}
+
+/* Star Wars-style fade overlay for RAG chat window (persistent, always at top of viewport) */
 .chat-fade-overlay {
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 120px;
     pointer-events: none;
-    z-index: 100;
+    z-index: 10;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     background: linear-gradient(
         to bottom,
