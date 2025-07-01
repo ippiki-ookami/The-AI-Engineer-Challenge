@@ -514,18 +514,15 @@ class RAGManager {
 // Export for use in homework platform
 window.RAGManager = RAGManager;
 
-// --- Star Wars fade overlay logic (now uses chat-viewport wrapper) ---
+// --- Star Wars fade overlay logic ---
 function ensureChatFadeOverlay() {
-    const chatViewport = document.getElementById('chatViewport');
-    if (chatViewport && !chatViewport.querySelector('.chat-fade-overlay')) {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages && !chatMessages.querySelector('.chat-fade-overlay')) {
         const overlay = document.createElement('div');
         overlay.className = 'chat-fade-overlay';
-        chatViewport.appendChild(overlay);
+        chatMessages.prepend(overlay);
     }
 }
 function removeChatFadeOverlay() {
-    const chatViewport = document.getElementById('chatViewport');
-    if (chatViewport) {
-        chatViewport.querySelectorAll('.chat-fade-overlay').forEach(el => el.remove());
-    }
+    document.querySelectorAll('.chat-fade-overlay').forEach(el => el.remove());
 }
