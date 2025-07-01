@@ -483,18 +483,26 @@
 }
 
 .documents-modal-content {
-    display: flex;
-    flex-direction: column;
+    max-width: 900px;
+    width: 95%;
     max-height: 90vh;
     height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.documents-modal-content .modal-body {
+    flex: 1;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 .documents-section {
+    padding: var(--spacing-md) 0;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    flex: 1 1 auto;
-    min-height: 0;
     overflow: hidden;
 }
 
@@ -505,6 +513,7 @@
     margin-bottom: var(--spacing-lg);
     padding-bottom: var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .documents-header-controls {
@@ -568,11 +577,10 @@
 }
 
 .documents-list {
-    flex: 0 0 auto;
-    /* Keep max-height for document list, but allow collapse */
-    max-height: 300px;
+    max-height: 200px;
     overflow-y: auto;
     transition: all var(--transition-normal);
+    flex-shrink: 0;
 }
 
 .documents-list.collapsed {
@@ -868,17 +876,22 @@
 
 /* RAG Console Styles */
 .rag-console {
-    flex: 1 1 auto;
-    min-height: 0;
+    margin-top: var(--spacing-lg);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    min-height: 0;
 }
 
 .console-header {
     background: var(--bg-elevated);
     padding: var(--spacing-md);
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .console-header h4 {
@@ -900,23 +913,23 @@
 }
 
 .console-output {
-    flex: 1 1 auto;
-    min-height: 0;
+    background: #1a1a1a;
+    color: #00ff00;
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    padding: var(--spacing-md);
+    flex: 1;
     overflow-y: auto;
-    /* Remove fixed max-height except for mobile */
-    max-height: none;
     border-bottom: 1px solid var(--border-color);
-    transition: max-height var(--transition-normal);
+    min-height: 0;
 }
 
-@media (max-width: 768px) {
-    .console-output {
-        max-height: 120px;
-        font-size: 0.7rem;
-    }
-    .documents-section.documents-collapsed .rag-console .console-output {
-        max-height: 350px;
-    }
+/* When documents are collapsed, the console will automatically expand to fill more space */
+
+[data-theme="light"] .console-output {
+    background: #f8f9fa;
+    color: #2d3748;
 }
 
 .console-line {
@@ -972,6 +985,7 @@
     padding: var(--spacing-sm) var(--spacing-md);
     background: var(--bg-tertiary);
     gap: var(--spacing-sm);
+    flex-shrink: 0;
 }
 
 .console-input {
@@ -1034,6 +1048,11 @@
         right: calc(var(--spacing-lg) + 1rem + 50px); /* Adjust for smaller documents button on mobile */
         width: 40px; /* Match mobile documents button size */
         height: 40px; /* Match mobile documents button size */
+    }
+
+    .console-output {
+        min-height: 0;
+        font-size: 0.7rem;
     }
 
     .console-input {
