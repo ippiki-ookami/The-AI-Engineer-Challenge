@@ -10,8 +10,195 @@ class RAGManager {
 
     init() {
         console.log('📄 RAG Manager initialized');
+        this.setupDocumentsModal();
         this.setupFileUpload();
         this.setupDocumentSearch();
+        ensureChatFadeOverlay();
+    }
+
+    setupDocumentsModal() {
+        // Get modal elements
+        this.documentsBtn = document.getElementById('documentsBtn');
+        this.documentsModal = document.getElementById('documentsModal');
+        this.closeDocumentsModal = document.getElementById('closeDocumentsModal');
+        this.addDocumentBtn = document.getElementById('addDocumentBtn');
+        this.documentsList = document.getElementById('documentsList');
+        this.documentsEmpty = document.getElementById('documentsEmpty');
+        this.documentsCount = document.getElementById('documentsCount');
+        this.documentFileInput = document.getElementById('documentFileInput');
+
+        if (!this.documentsBtn) return;
+
+        // Show the documents button for RAG homework
+        this.documentsBtn.style.display = 'flex';
+
+        // Event listeners
+        this.documentsBtn.addEventListener('click', () => this.openDocumentsModal());
+        this.closeDocumentsModal?.addEventListener('click', () => this.closeDocumentsModalHandler());
+        this.addDocumentBtn?.addEventListener('click', () => this.triggerFileUpload());
+        
+        // Close modal when clicking outside
+        this.documentsModal?.addEventListener('click', (e) => {
+            if (e.target === this.documentsModal) {
+                this.closeDocumentsModalHandler();
+            }
+        });
+
+        // Handle file input change
+        this.documentFileInput?.addEventListener('change', (e) => this.handleDocumentUpload(e));
+    }
+
+    openDocumentsModal() {
+        if (this.documentsModal) {
+            this.documentsModal.style.display = 'flex';
+            this.renderDocuments();
+        }
+    }
+
+    closeDocumentsModalHandler() {
+        if (this.documentsModal) {
+            this.documentsModal.style.display = 'none';
+        }
+    }
+
+    triggerFileUpload() {
+        if (this.documentFileInput) {
+            this.documentFileInput.click();
+        }
+    }
+
+    async handleDocumentUpload(event) {
+        const files = Array.from(event.target.files);
+        if (files.length === 0) return;
+
+        for (const file of files) {
+            await this.uploadDocument(file);
+        }
+
+        // Clear the input
+        event.target.value = '';
+        
+        // Update the documents display
+        this.renderDocuments();
+    }
+
+    async uploadDocument(file) {
+        // Add document to local storage (session-only)
+        const documentId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        const document = {
+            id: documentId,
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            uploadedAt: new Date().toISOString(),
+            content: await this.readFileContent(file)
+        };
+
+        this.uploadedDocuments.push(document);
+        this.showNotification(`${file.name} uploaded successfully!`, 'success');
+    }
+
+    async readFileContent(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = () => reject(new Error('Failed to read file'));
+            reader.readAsText(file);
+        });
+    }
+
+    renderDocuments() {
+        if (!this.documentsList || !this.documentsEmpty || !this.documentsCount) return;
+
+        // Update count
+        this.documentsCount.textContent = this.uploadedDocuments.length;
+
+        if (this.uploadedDocuments.length === 0) {
+            this.documentsEmpty.style.display = 'block';
+            this.documentsList.innerHTML = '<div class="documents-empty" id="documentsEmpty"><i class="fas fa-file-text"></i><p>No documents uploaded yet</p><span>Upload documents to enable RAG functionality</span></div>';
+            return;
+        }
+
+        this.documentsEmpty.style.display = 'none';
+        
+        // Render document list
+        const documentsHtml = this.uploadedDocuments.map(doc => `
+            <div class="document-item" data-document-id="${doc.id}">
+                <div class="document-info">
+                    <div class="document-icon">
+                        <i class="fas ${this.getFileIcon(doc.type)}"></i>
+                    </div>
+                    <div class="document-details">
+                        <h4>${doc.name}</h4>
+                        <p>${this.formatFileSize(doc.size)} • ${this.formatDate(doc.uploadedAt)}</p>
+                    </div>
+                </div>
+                <div class="document-actions">
+                    <button class="action-btn view" onclick="ragManager.viewDocument('${doc.id}')" title="View Document">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="action-btn delete" onclick="ragManager.deleteDocument('${doc.id}')" title="Delete Document">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `).join('');
+
+        this.documentsList.innerHTML = documentsHtml;
+    }
+
+    getFileIcon(type) {
+        if (type.includes('pdf')) return 'fa-file-pdf';
+        if (type.includes('word')) return 'fa-file-word';
+        if (type.includes('text')) return 'fa-file-text';
+        return 'fa-file';
+    }
+
+    formatFileSize(bytes) {
+        if (bytes === 0) return '0 B';
+        const k = 1024;
+        const sizes = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    viewDocument(documentId) {
+        const document = this.uploadedDocuments.find(doc => doc.id === documentId);
+        if (!document) return;
+
+        // Create a modal to show document content
+        const modal = document.createElement('div');
+        modal.className = 'modal active';
+        modal.innerHTML = `
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3><i class="fas ${this.getFileIcon(document.type)}"></i> ${document.name}</h3>
+                    <button class="close-btn" onclick="this.closest('.modal').remove()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="document-preview">
+                        ${document.content}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+    }
+
+    deleteDocument(documentId) {
+        if (!confirm('Are you sure you want to delete this document?')) return;
+        
+        this.uploadedDocuments = this.uploadedDocuments.filter(doc => doc.id !== documentId);
+        this.renderDocuments();
+        this.showNotification('Document deleted successfully', 'info');
     }
 
     setupFileUpload() {
@@ -309,8 +496,33 @@ class RAGManager {
         if (uploadBtn) {
             uploadBtn.style.display = 'none';
         }
+
+        // Hide the documents button when switching away from RAG
+        if (this.documentsBtn) {
+            this.documentsBtn.style.display = 'none';
+        }
+
+        // Close the modal if it's open
+        if (this.documentsModal) {
+            this.documentsModal.style.display = 'none';
+        }
+
+        removeChatFadeOverlay();
     }
 }
 
 // Export for use in homework platform
 window.RAGManager = RAGManager;
+
+// --- Star Wars fade overlay logic ---
+function ensureChatFadeOverlay() {
+    const chatMessages = document.querySelector('.chat-messages');
+    if (chatMessages && !chatMessages.querySelector('.chat-fade-overlay')) {
+        const overlay = document.createElement('div');
+        overlay.className = 'chat-fade-overlay';
+        chatMessages.appendChild(overlay);
+    }
+}
+function removeChatFadeOverlay() {
+    document.querySelectorAll('.chat-fade-overlay').forEach(el => el.remove());
+}

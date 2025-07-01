@@ -240,14 +240,17 @@
     position: relative; /* Required for absolute positioning of documents button */
 }
 
-/* Star Wars-style fade effect for chat messages - RAG homework only */
-.chat-messages::before {
-    content: '';
+/* Star Wars-style fade overlay for RAG chat window (persistent, always at top of scroll) */
+/* Remove any previous ::before/::after fade effects from this file! */
+
+/* Overlay element: .chat-fade-overlay (added by JS) */
+.chat-fade-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 150px; /* Increased height for better fade effect */
+    top: 0; left: 0; right: 0;
+    height: 120px;
+    pointer-events: none;
+    z-index: 100;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     background: linear-gradient(
         to bottom,
         var(--bg-secondary) 0%,
@@ -256,56 +259,14 @@
         rgba(42, 52, 65, 0.7) 50%,
         rgba(42, 52, 65, 0.3) 75%,
         transparent 100%
-    ) !important;
-    pointer-events: none; /* Allow clicking through the overlay */
-    z-index: 999; /* Very high z-index to ensure it's above everything */
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0; /* Match chat container border radius */
-    backdrop-filter: blur(2px); /* Add subtle blur for extra Star Wars effect */
-    animation: starWarsFade 3s ease-in-out infinite alternate; /* Subtle animation */
-}
-
-/* Star Wars fade animation */
-@keyframes starWarsFade {
-    0% {
-        opacity: 0.9;
-        transform: translateY(-2px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-/* Light theme variant - Star Wars fade */
-[data-theme="light"] .chat-messages::before {
-    background: linear-gradient(
-        to bottom,
-        var(--bg-secondary) 0%,
-        var(--bg-secondary) 10%,
-        rgba(255, 255, 255, 0.95) 25%,
-        rgba(255, 255, 255, 0.7) 50%,
-        rgba(255, 255, 255, 0.3) 75%,
-        transparent 100%
-    ) !important;
+    );
     backdrop-filter: blur(2px);
+    animation: starWarsFade 3s ease-in-out infinite alternate;
 }
 
-/* Enhanced fade effect for better Star Wars feel */
-.chat-messages::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 80px; /* Secondary fade layer */
-    background: linear-gradient(
-        to bottom,
-        var(--bg-secondary) 0%,
-        transparent 100%
-    ) !important;
-    pointer-events: none;
-    z-index: 998; /* Just below the main fade */
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+@keyframes starWarsFade {
+    0% { opacity: 0.9; transform: translateY(-2px); }
+    100% { opacity: 1; transform: translateY(0); }
 }
 
 /* Floating Action Button (FAB) for documents - positioned above Star Wars fade */
