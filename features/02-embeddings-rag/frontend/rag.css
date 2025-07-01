@@ -247,8 +247,8 @@
 .chat-fade-overlay {
     position: sticky; /* Stick to the top of the scroll container */
     top: 0;
-    /* We remove left/right: 0 for sticky positioning */
     height: 120px;
+    margin-bottom: -120px; /* Crucial fix: Pulls content up to scroll under the overlay */
     pointer-events: none;
     z-index: 100;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
