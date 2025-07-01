@@ -13,7 +13,7 @@ class RAGManager {
         this.setupDocumentsModal();
         this.setupFileUpload();
         this.setupDocumentSearch();
-        ensureChatFadeOverlay();
+        document.querySelector('.chat-container')?.classList.add('rag-fade-active');
     }
 
     setupDocumentsModal() {
@@ -487,6 +487,7 @@ class RAGManager {
 
     // Method to clean up when switching away from RAG
     cleanup() {
+        console.log('📚 RAG Manager cleaned up');
         const searchInput = document.getElementById('documentSearch');
         if (searchInput) {
             searchInput.style.display = 'none';
@@ -507,22 +508,9 @@ class RAGManager {
             this.documentsModal.style.display = 'none';
         }
 
-        removeChatFadeOverlay();
+        document.querySelector('.chat-container')?.classList.remove('rag-fade-active');
     }
 }
 
 // Export for use in homework platform
 window.RAGManager = RAGManager;
-
-// --- Star Wars fade overlay logic ---
-function ensureChatFadeOverlay() {
-    const chatMessages = document.querySelector('.chat-messages');
-    if (chatMessages && !chatMessages.querySelector('.chat-fade-overlay')) {
-        const overlay = document.createElement('div');
-        overlay.className = 'chat-fade-overlay';
-        chatMessages.prepend(overlay);
-    }
-}
-function removeChatFadeOverlay() {
-    document.querySelectorAll('.chat-fade-overlay').forEach(el => el.remove());
-}
