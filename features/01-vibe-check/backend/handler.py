@@ -2,14 +2,8 @@
 Vibe Check Handler - Basic chat functionality
 Inherits from BaseChatHandler and implements simple chat processing
 """
-import sys
-from pathlib import Path
-
-# Add base directory to path so we can import base modules
-sys.path.append(str(Path(__file__).parent.parent.parent.parent))
-
-from base.backend.base_handler import BaseChatHandler, BaseChatRequest
-from base.backend.debug_logger import debug_track
+from base_handler import BaseChatHandler, BaseChatRequest
+from debug_logger import debug_track
 
 
 class VibeCheckRequest(BaseChatRequest):
